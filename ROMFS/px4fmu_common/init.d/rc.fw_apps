@@ -17,12 +17,16 @@ fi
 ekf2 start
 
 #
-# Start attitude controller
+# Start Terra Ranger One driver
 #
-fw_att_control start
-fw_pos_control_l1 start
+trone start
+
+#
+# Start perching_wall controller
+#
+perching_wall start
 
 #
 # Start Land Detector
 #
-land_detector start fixedwing
+#land_detector start fixedwing
