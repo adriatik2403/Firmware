@@ -926,20 +926,6 @@ DroneAquaTest::vehicle_land_detected_poll()
 	}
 }
 
-// POUR MODULE DU PERCHING WALL -> PAS UTILE
-/*
-void
-DroneAquaTest::distance_poll()
-{
-	bool distance_updated;
-	orb_check(_distance_sub, &distance_updated);
-
-	if (distance_updated) {
-		orb_copy(ORB_ID(distance_sensor), _distance_sub, &_distance);
-	}
-}
-*/
-
 //********************************************//
 // SEQUENCE DE DÉCOLLAGE	                ////
 //********************************************//
@@ -1161,16 +1147,15 @@ DroneAquaTest::task_main()
 
 	        /*****************************************************/
 	    
-#if 0
-	        static int compteur = 0;
+	        //static int compteur = 0;
 
-	        static bool mode_seq0 = false;
-	        static bool mode_seq1 = false;
-	        static bool mode_seq2 = false;
-	        static bool mode_seq3 = false;
-	        static bool mode_seq4 = false;
-	        static bool mode_seq5 = false;       
-	        static bool mode_seq6 = false;
+	        //static bool mode_seq0 = false;
+	        //static bool mode_seq1 = false;
+	        //static bool mode_seq2 = false;
+	        //static bool mode_seq3 = false;
+	        //static bool mode_seq4 = false;
+	        //static bool mode_seq5 = false;       
+	        //static bool mode_seq6 = false;
 	        static bool mode_seq7 = false;
 	        static bool mode_seq8 = false;
 	        static bool mode_seq9 = false;
@@ -1178,11 +1163,11 @@ DroneAquaTest::task_main()
 	        static bool mode_seq11 = false;
 
 	        static bool flagidle = false;
-#endif
+
+	        static int last_time = 0;
         
 	        /*****************************************************/
 
-	        // SI PAS DUPDATE DANS 500ms -> LE PILOTE REPREND LES COMMANDES
 		/* wait for up to 500ms for data */
 		int pret = px4_poll(&fds[0], (sizeof(fds) / sizeof(fds[0])), 100);
 
@@ -1230,6 +1215,7 @@ DroneAquaTest::task_main()
             vehicle_status_poll();
             vehicle_accel_poll();
             vehicle_manual_poll();
+            vehicle_control_mode_poll();
 
             //****************************************************************************************************//
             //A FARE -> METTRE CETTE SÉQUENCE DANS UNE FONCTION APPROPRIÉE ET RENOMMER LE MODULE "AQUA_TAKE_OFF"
@@ -1241,8 +1227,7 @@ DroneAquaTest::task_main()
             _actuators.control[actuator_controls_s::INDEX_YAW] = _manual.r; // 0.0f + _parameters.trim_yaw
             _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z; // pass-through de la commande du trigger
 
-#if 0
-
+            /*
             // WAIT AVANT LA SEQUENCE (FALCULTATIF)
             if(mode_seq0)
             {
@@ -1355,8 +1340,9 @@ DroneAquaTest::task_main()
                    mode_seq6 = false;
                    mode_seq7 = true;
                 }                                             
-            }           
-                  
+            }
+            */         
+            
             // IDLE DU THRUST A 20% PENDANT 2 SEC
             if(mode_seq7)
             {
@@ -1365,9 +1351,20 @@ DroneAquaTest::task_main()
                 _actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
                 _actuators_airframe.control[INDEX_SERVO_ROT] = 0.0f;
 
+                flagidle = true;
+
+                /*
                 if(compteur++ >= 400) // 2 sec (VALEUR = 400)
                 {
                    compteur = 0;
+                   mode_seq7 = false;
+                   mode_seq8 = true;
+                }
+                */
+                if(hrt_absolute_time() - last_time >= 2000000) // 2 sec (VALEUR = 400)
+                {
+                   last_time = hrt_absolute_time();
+                   //compteur = 0;
                    mode_seq7 = false;
                    mode_seq8 = true;
                 }
@@ -1381,9 +1378,19 @@ DroneAquaTest::task_main()
                 _actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
                 _actuators_airframe.control[INDEX_SERVO_ROT] = 0.0f;
 
+                /*
                 if(compteur++ >= 24) // 0.12 sec (VALEUR = 24)
                 {
                    compteur = 0;
+                   mode_seq8 = false;
+                   mode_seq9 = true;
+                }
+                */
+
+                if(hrt_absolute_time() - last_time >= 120000) // 0.12 sec (VALEUR = 24)
+                {
+                   last_time = hrt_absolute_time();
+                   //compteur = 0;
                    mode_seq8 = false;
                    mode_seq9 = true;
                 }
@@ -1397,9 +1404,19 @@ DroneAquaTest::task_main()
                 _actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
                 _actuators_airframe.control[INDEX_SERVO_ROT] = 0.0f;
 
-                if(compteur++ >= 16) // 0.20 sec (VALEUR = 40)
+                /*
+                if(compteur++ >= 8) // 0.20 sec (VALEUR = 40)
                 {
                    compteur = 0;
+                   mode_seq9 = false;
+                   mode_seq10 = true;
+                }
+                */
+
+                if(hrt_absolute_time() - last_time >= 40000) // 0.20 sec (VALEUR = 40)
+                {
+                   last_time = hrt_absolute_time();
+                   //compteur = 0;
                    mode_seq9 = false;
                    mode_seq10 = true;
                 }
@@ -1413,19 +1430,24 @@ DroneAquaTest::task_main()
                 _actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
                 _actuators_airframe.control[INDEX_SERVO_ROT] = 0.0f;
 
+                /*
                 if(compteur++ >= 400) // 2 sec
                 {
                    compteur = 0;
                    mode_seq10 = false;
                    mode_seq11 = true;
                 }
+                */
+
+                if(hrt_absolute_time() - last_time >= 2000000) // 2 sec
+                {
+                   last_time = hrt_absolute_time();
+                   //compteur = 0;
+                   mode_seq10 = false;
+                   mode_seq11 = true;
+                }                
             }
 
-            //****************************************************************************************************//
-            //DONNE LA COMMANDE DU THROTTLE AU PILOTE (POUR LINSTANT)
-            //ÉVENTUELLEMENT ON CHANGERA CETTE SÉQUENCE PAR UN KILL DE LA THREAD OU UN RETOUR EN MODE IDLE EN ATTENTE
-            //DUNE COMMANDE DU COMMANDER INDIQUANT QUIL EST TEMPS DE FAIR ELA SÉQUENCE DE DÉCOLLAGE
-            //****************************************************************************************************//
             if(mode_seq11)
             {
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z; // pass-through de la commande du trigger
@@ -1437,24 +1459,28 @@ DroneAquaTest::task_main()
             // COMMANDE DE ZÉRO SI VÉHICULE PAS ARMÉ
             if (_vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED) {
 
-				_actuators.control[actuator_controls_s::INDEX_THROTTLE] = _actuators.control[actuator_controls_s::INDEX_THROTTLE];
+		_actuators.control[actuator_controls_s::INDEX_THROTTLE] = _actuators.control[actuator_controls_s::INDEX_THROTTLE];
 
                 if(flagidle == false)
-                    mode_seq0 = true;
+                {
+                    //mode_seq0 = true;
+                    last_time = hrt_absolute_time();
+                    mode_seq7 = true;
+                }
 
-			} else {
+	    } else {
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; // quant nuttx boot le thrust est a 0
                 _actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f; // quand nuttx boot on est certain quaucun muscle wire nest activé
                 _actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f; // quand nuttx boot on est certain quaucun muscle wire nest activé
                 _actuators_airframe.control[INDEX_SERVO_ROT] = 0.0f; // le servo ne bouge pas
 
-		        mode_seq0 = false;
-		        mode_seq1 = false;
-		        mode_seq2 = false;
-		        mode_seq3 = false;
-		        mode_seq4 = false;
-		        mode_seq5 = false;       
-		        mode_seq6 = false;
+		        //mode_seq0 = false;
+		        //mode_seq1 = false;
+		        //mode_seq2 = false;
+		        //mode_seq3 = false;
+		        //mode_seq4 = false;
+		        //mode_seq5 = false;       
+		        //mode_seq6 = false;
 		        mode_seq7 = false;
 		        mode_seq8 = false;
 		        mode_seq9 = false;
@@ -1463,33 +1489,33 @@ DroneAquaTest::task_main()
 
                 flagidle = false;
 
-                compteur = 0;
+                //compteur = 0;
 			}
 
             // SÉCURITÉ -> MODE MANUEL ENCLENCHÉ
-            if(_manual.mode_slot == manual_control_setpoint_s::MODE_SLOT_1) // si mode dans la position 1 (mode manuel pour linstant) -> éteint tout
+            if(_manual.kill_switch == manual_control_setpoint_s::SWITCH_POS_ON) // si en mode manuel
             {
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
                 _actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f;
                 _actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
                 _actuators_airframe.control[INDEX_SERVO_ROT] = 0.0f; // le servo ne bouge pas
 
-		        mode_seq0 = false;
-		        mode_seq1 = false;
-		        mode_seq2 = false;
-		        mode_seq3 = false;
-		        mode_seq4 = false;
-		        mode_seq5 = false;       
-		        mode_seq6 = false;
+		        //mode_seq0 = false;
+		        //mode_seq1 = false;
+		        //mode_seq2 = false;
+		        //mode_seq3 = false;
+		        //mode_seq4 = false;
+		        //mode_seq5 = false;       
+		        //mode_seq6 = false;
 		        mode_seq7 = false;
 		        mode_seq8 = false;
 		        mode_seq9 = false;
         		mode_seq10 = false;
         		mode_seq11 = false;
 
-                compteur = 0;
+                //compteur = 0;
             }
-#endif
+
 
             // PUBLIE LA VALEUR DES ACTUATEURS 
             // DANS CETTE SÉQUENCE ON METTRA PROBABLEMENT LENVOIE DAUTRES VARIABLES

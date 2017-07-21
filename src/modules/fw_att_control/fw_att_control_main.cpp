@@ -763,11 +763,6 @@ FixedwingAttitudeControl::task_main()
 	while (!_task_should_exit) {
 		static int loop_counter = 0;
 
-		////////////////////////////////////////////////////////////////////
-		// pour test manoeuvre de décollage custom commander via le position controller
-		static int compteur = 0;
-		////////////////////////////////////////////////////////////////////
-
 		/* wait for up to 500ms for data */
 		int pret = px4_poll(&fds[0], (sizeof(fds) / sizeof(fds[0])), 100);
 
@@ -1093,12 +1088,9 @@ FixedwingAttitudeControl::task_main()
 							}
 						}
 
-						///////////////////////////////////////////////////////////////////////////////
-						// TEST CONTROL DU PITCH
 						float pitch_u = _pitch_ctrl.control_euler_rate(control_input);
 						_actuators.control[actuator_controls_s::INDEX_PITCH] = (PX4_ISFINITE(pitch_u)) ? pitch_u + _parameters.trim_pitch :
 								_parameters.trim_pitch;
-						///////////////////////////////////////////////////////////////////////////////
 
 						if (!PX4_ISFINITE(pitch_u)) {
 							_pitch_ctrl.reset_integrator();
@@ -1145,53 +1137,17 @@ FixedwingAttitudeControl::task_main()
 							}
 						}
 
-						////////////////////////////////////////////////////////////////////////////////////////////////////////
-						if(!_att_sp.decollage_custom)
-						{
-							compteur = 0;
-
-						}
-
-						if(_att_sp.decollage_custom)
-						{
-							_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.1f;
-
-							// 
-							if(compteur++ >= 400) // NOTE: la loop du att control roule a 200 Hz (je crois...)
-							{
-								_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
-								//compteur = 0;
-							}
-						}
-						else
-						{
-							/////////////////////////////////////////////////////////////////////////////////////////
-							// test offset throttle en att control enabled (mission et stabilized je crois)
-							/* throttle passed through if it is finite and if no engine failure was detected */
-							_actuators.control[actuator_controls_s::INDEX_THROTTLE] = (PX4_ISFINITE(throttle_sp) &&
-									!(_vehicle_status.engine_failure ||
-									  _vehicle_status.engine_failure_cmd)) ?
-									throttle_sp : 0.0f;
-							/////////////////////////////////////////////////////////////////////////////////////////
-						}
-						////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 						/* throttle passed through if it is finite and if no engine failure was detected */
 						_actuators.control[actuator_controls_s::INDEX_THROTTLE] = (PX4_ISFINITE(throttle_sp) &&
 								!(_vehicle_status.engine_failure ||
 								  _vehicle_status.engine_failure_cmd)) ?
 								throttle_sp : 0.0f;
 
-						///////////////////////////////////////////////////////////////////////////////////////////////////////////
-						// a decommenter
-						/*
-						// scale effort by battery status
+						/* scale effort by battery status */
 						if (_parameters.bat_scale_en && _battery_status.scale > 0.0f &&
 						    _actuators.control[actuator_controls_s::INDEX_THROTTLE] > 0.1f) {
 							_actuators.control[actuator_controls_s::INDEX_THROTTLE] *= _battery_status.scale;
 						}
-						*/
-						///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 						if (!PX4_ISFINITE(throttle_sp)) {

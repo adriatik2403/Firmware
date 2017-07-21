@@ -233,10 +233,6 @@ private:
 	uint8_t _pos_reset_counter{0};				///< captures the number of times the estimator has reset the horizontal position
 	uint8_t _alt_reset_counter{0};				///< captures the number of times the estimator has reset the altitude state
 
-	int Custom_Takeoff_Drone_Aqua{0};
-	int flagtest{0};
-	int comp{0};
-
 	ECL_L1_Pos_Controller	_l1_control;
 	TECS			_tecs;
 
