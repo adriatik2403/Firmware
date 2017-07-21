@@ -909,16 +909,14 @@ MavlinkReceiver::handle_message_set_position_target_local_ned(mavlink_message_t 
 					pos_sp_triplet.next.valid = false;
 					pos_sp_triplet.current.valid = true;
 
-					/* Order of statements matters. Takeoff can override loiter.
-					 * See https://github.com/mavlink/mavlink/pull/670 for a broader conversation. */
-					if (is_loiter_sp) {
-						pos_sp_triplet.current.type = position_setpoint_s::SETPOINT_TYPE_LOITER;
-
-					} else if (is_takeoff_sp) {
+					if (is_takeoff_sp) {
 						pos_sp_triplet.current.type = position_setpoint_s::SETPOINT_TYPE_TAKEOFF;
 
 					} else if (is_land_sp) {
 						pos_sp_triplet.current.type = position_setpoint_s::SETPOINT_TYPE_LAND;
+
+					} else if (is_loiter_sp) {
+						pos_sp_triplet.current.type = position_setpoint_s::SETPOINT_TYPE_LOITER;
 
 					} else if (is_idle_sp) {
 						pos_sp_triplet.current.type = position_setpoint_s::SETPOINT_TYPE_IDLE;

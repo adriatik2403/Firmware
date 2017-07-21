@@ -475,13 +475,10 @@ LogListHelper::_init()
 		if (result->d_type == PX4LOG_DIRECTORY) {
 			time_t tt = 0;
 			char log_path[128];
-			int ret = snprintf(log_path, sizeof(log_path), "%s/%s", kLogRoot, result->d_name);
-			bool path_is_ok = (ret > 0) && (ret < sizeof(log_path));
+			snprintf(log_path, sizeof(log_path), "%s/%s", kLogRoot, result->d_name);
 
-			if (path_is_ok) {
-				if (_get_session_date(log_path, result->d_name, tt)) {
-					_scan_logs(f, log_path, tt);
-				}
+			if (_get_session_date(log_path, result->d_name, tt)) {
+				_scan_logs(f, log_path, tt);
 			}
 		}
 	}
@@ -537,15 +534,12 @@ LogListHelper::_scan_logs(FILE *f, const char *dir, time_t &date)
 				time_t  ldate = date;
 				uint32_t size = 0;
 				char log_file_path[128];
-				int ret = snprintf(log_file_path, sizeof(log_file_path), "%s/%s", dir, result->d_name);
-				bool path_is_ok = (ret > 0) && (ret < sizeof(log_file_path));
+				snprintf(log_file_path, sizeof(log_file_path), "%s/%s", dir, result->d_name);
 
-				if (path_is_ok) {
-					if (_get_log_time_size(log_file_path, result->d_name, ldate, size)) {
-						//-- Write result->out to list file
-						fprintf(f, "%u %u %s\n", (unsigned)ldate, (unsigned)size, log_file_path);
-						log_count++;
-					}
+				if (_get_log_time_size(log_file_path, result->d_name, ldate, size)) {
+					//-- Write result->out to list file
+					fprintf(f, "%u %u %s\n", (unsigned)ldate, (unsigned)size, log_file_path);
+					log_count++;
 				}
 			}
 		}
@@ -607,27 +601,20 @@ LogListHelper::delete_all(const char *dir)
 
 		if (result->d_type == PX4LOG_DIRECTORY && result->d_name[0] != '.') {
 			char log_path[128];
-			int ret = snprintf(log_path, sizeof(log_path), "%s/%s", dir, result->d_name);
-			bool path_is_ok = (ret > 0) && (ret < sizeof(log_path));
+			snprintf(log_path, sizeof(log_path), "%s/%s", dir, result->d_name);
+			LogListHelper::delete_all(log_path);
 
-			if (path_is_ok) {
-				LogListHelper::delete_all(log_path);
-
-				if (rmdir(log_path)) {
-					PX4LOG_WARN("MavlinkLogHandler::delete_all Error removing %s\n", log_path);
-				}
+			if (rmdir(log_path)) {
+				PX4LOG_WARN("MavlinkLogHandler::delete_all Error removing %s\n", log_path);
 			}
 		}
 
 		if (result->d_type == PX4LOG_REGULAR_FILE) {
 			char log_path[128];
-			int ret = snprintf(log_path, sizeof(log_path), "%s/%s", dir, result->d_name);
-			bool path_is_ok = (ret > 0) && (ret < sizeof(log_path));
+			snprintf(log_path, sizeof(log_path), "%s/%s", dir, result->d_name);
 
-			if (path_is_ok) {
-				if (unlink(log_path)) {
-					PX4LOG_WARN("MavlinkLogHandler::delete_all Error deleting %s\n", log_path);
-				}
+			if (unlink(log_path)) {
+				PX4LOG_WARN("MavlinkLogHandler::delete_all Error deleting %s\n", log_path);
 			}
 		}
 	}

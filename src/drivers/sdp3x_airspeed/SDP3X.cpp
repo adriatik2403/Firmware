@@ -86,7 +86,7 @@ SDP3X::init_sdp3x()
 
 	// step 3 - get scale
 	uint8_t val[9];
-	ret = transfer(nullptr, 0, &val[0], sizeof(val));
+	ret = transfer(nullptr, 0, &val[0], 9);
 
 	if (ret != PX4_OK) {
 		perf_count(_comms_errors);
@@ -110,9 +110,9 @@ SDP3X::collect()
 {
 	perf_begin(_sample_perf);
 
-	// read 9 bytes from the sensor
+	// read 6 bytes from the sensor
 	uint8_t val[6];
-	int ret = transfer(nullptr, 0, &val[0], sizeof(val));
+	int ret = transfer(nullptr, 0, &val[0], 6);
 
 	if (ret != PX4_OK) {
 		perf_count(_comms_errors);
@@ -128,8 +128,8 @@ SDP3X::collect()
 		ret = 0;
 	}
 
-	int16_t P = (((int16_t)val[0]) << 8) | val[1];
-	int16_t temp = (((int16_t)val[3]) << 8) | val[4];
+	int16_t P = (((uint16_t)val[0]) << 8) | val[1];
+	int16_t temp = (((uint16_t)val[3]) << 8) | val[4];
 
 	float diff_press_pa_raw = static_cast<float>(P) / static_cast<float>(_scale);
 	float temperature_c = temp / static_cast<float>(SDP3X_SCALE_TEMPERATURE);
@@ -187,22 +187,22 @@ SDP3X::cycle()
 
 bool SDP3X::crc(const uint8_t data[], unsigned size, uint8_t checksum)
 {
-	uint8_t crc_value = 0xff;
+	uint8_t crc = 0xff;
 
 	// calculate 8-bit checksum with polynomial 0x31 (x^8 + x^5 + x^4 + 1)
 	for (unsigned i = 0; i < size; i++) {
-		crc_value ^= (data[i]);
+		crc ^= (data[i]);
 
 		for (int bit = 8; bit > 0; --bit) {
-			if (crc_value & 0x80) {
-				crc_value = (crc_value << 1) ^ 0x31;
+			if (crc & 0x80) {
+				crc = (crc << 1) ^ 0x31;
 
 			} else {
-				crc_value = (crc_value << 1);
+				crc = (crc << 1);
 			}
 		}
 	}
 
 	// verify checksum
-	return (crc_value == checksum);
+	return (crc == checksum);
 }

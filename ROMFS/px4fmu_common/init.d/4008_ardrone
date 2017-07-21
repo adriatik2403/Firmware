@@ -3,7 +3,6 @@
 # @name AR.Drone Frame
 #
 # @type Quadrotor x
-# @class Copter
 #
 # @board px4fmu-v2 exclude
 # @board px4fmu-v3 exclude

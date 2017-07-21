@@ -44,6 +44,7 @@ if(${OS} STREQUAL "nuttx")
 			device_nuttx.cpp
 			cdev.cpp
 			i2c_nuttx.cpp
+			pio.cpp
 			spi.cpp
 		)
 	endif()

@@ -519,7 +519,6 @@ MissionBlock::mission_item_to_position_setpoint(const struct mission_item_s *ite
 	sp->lon = item->lon;
 	sp->alt = item->altitude_is_relative ? item->altitude + _navigator->get_home_position()->alt : item->altitude;
 	sp->yaw = item->yaw;
-	sp->yaw_valid = PX4_ISFINITE(item->yaw);
 	sp->loiter_radius = (fabsf(item->loiter_radius) > NAV_EPSILON_POSITION) ? fabsf(item->loiter_radius) :
 			    _navigator->get_loiter_radius();
 	sp->loiter_direction = (item->loiter_radius > 0) ? 1 : -1;
@@ -571,15 +570,9 @@ MissionBlock::mission_item_to_position_setpoint(const struct mission_item_s *ite
 		break;
 
 	case NAV_CMD_LOITER_TO_ALT:
-
 		// initially use current altitude, and switch to mission item altitude once in loiter position
-		if (_param_loiter_min_alt.get() > 0.0f) { // ignore _param_loiter_min_alt if smaller then 0 (-1)
-			sp->alt = math::max(_navigator->get_global_position()->alt,
-					    _navigator->get_home_position()->alt + _param_loiter_min_alt.get());
-
-		} else {
-			sp->alt = _navigator->get_global_position()->alt;
-		}
+		sp->alt = math::max(_navigator->get_global_position()->alt,
+				    _navigator->get_home_position()->alt + _param_loiter_min_alt.get());
 
 	// fall through
 	case NAV_CMD_LOITER_TIME_LIMIT:

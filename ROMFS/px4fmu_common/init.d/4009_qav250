@@ -3,9 +3,8 @@
 # @name Lumenier QAV250
 #
 # @type Quadrotor x
-# @class Copter
 #
-# @maintainer Lorenz Meier <lorenz@px4.io>
+# @maintainer Mark Whitehorn <kd0aij@gmail.com>
 #
 
 sh /etc/init.d/4001_quad_x

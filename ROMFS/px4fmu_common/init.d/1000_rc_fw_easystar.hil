@@ -3,7 +3,6 @@
 # @name HILStar (XPlane)
 #
 # @type Simulation
-# @class Plane
 #
 # @output MAIN1 aileron
 # @output MAIN2 elevator

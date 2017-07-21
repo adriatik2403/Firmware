@@ -30,9 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-
-include_directories(${PX4_SOURCE_DIR}/mavlink/include/mavlink)
-
 px4_add_module(
 	MODULE drivers__snapdragon_rc_pwm
 	MAIN snapdragon_rc_pwm

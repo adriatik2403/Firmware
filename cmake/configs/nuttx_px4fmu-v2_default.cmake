@@ -18,6 +18,8 @@ set(config_module_list
 	drivers/px4fmu
 	drivers/px4io
 	drivers/boards/px4fmu-v2
+	drivers/charging_i2c
+	drivers/wake_up_i2c_slave
 	drivers/rgbled
 	drivers/mpu6000
 	drivers/mpu9250
@@ -72,7 +74,7 @@ set(config_module_list
 	systemcmds/reboot
 	#systemcmds/sd_bench
 	systemcmds/top
-	#systemcmds/topic_listener
+	systemcmds/topic_listener
 	systemcmds/ver
 
 	#
@@ -116,9 +118,10 @@ set(config_module_list
 	modules/fw_pos_control_l1
 	modules/gnd_att_control
 	modules/gnd_pos_control
-	modules/mc_att_control
-	modules/mc_pos_control
-	modules/vtol_att_control
+	modules/drone_aqua_test
+	#modules/mc_att_control
+	#modules/mc_pos_control
+	#modules/vtol_att_control
 
 	#
 	# Logging
@@ -129,7 +132,7 @@ set(config_module_list
 	#
 	# Library modules
 	#
-	modules/systemlib/param
+	modules/param
 	modules/systemlib
 	modules/systemlib/mixer
 	modules/uORB

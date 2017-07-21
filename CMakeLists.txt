@@ -99,7 +99,7 @@
 #
 #=============================================================================
 
-if (${CMAKE_VERSION} VERSION_LESS 3.1.0)
+if ("${CMAKE_VERSION}" VERSION_LESS 3.1.0)
 	message("Not a valid CMake version")
 	message("On Ubuntu >= 16.04, install or upgrade via:")
 	message("	sudo apt-get install cmake")
@@ -157,6 +157,8 @@ include(common/sanitizers)
 if (NOT CMAKE_BUILD_TYPE)
 	if (${OS} STREQUAL "nuttx")
 		set(PX4_BUILD_TYPE "MinSizeRel")
+	elseif (${OS} STREQUAL "qurt")
+		set(PX4_BUILD_TYPE "MinSizeRel")
 	elseif (${OS} STREQUAL "bebop")
 		set(PX4_BUILD_TYPE "MinSizeRel")
 	else()
@@ -196,6 +198,7 @@ px4_add_git_submodule(TARGET git_gazebo PATH "Tools/sitl_gazebo")
 px4_add_git_submodule(TARGET git_gencpp PATH "Tools/gencpp")
 px4_add_git_submodule(TARGET git_genmsg PATH "Tools/genmsg")
 px4_add_git_submodule(TARGET git_gps_devices PATH "src/drivers/gps/devices")
+px4_add_git_submodule(TARGET git_gtest PATH "unittests/gtest")
 px4_add_git_submodule(TARGET git_jmavsim PATH "Tools/jMAVSim")
 px4_add_git_submodule(TARGET git_matrix PATH "src/lib/matrix")
 px4_add_git_submodule(TARGET git_mavlink PATH "mavlink/include/mavlink/v1.0")
@@ -368,7 +371,7 @@ link_directories(${link_dirs})
 add_definitions(${definitions})
 
 #=============================================================================
-# message, and airframe generation
+# message, parameter, and airframe generation
 #
 
 include(common/px4_metadata)
@@ -381,7 +384,13 @@ px4_generate_messages(TARGET msg_gen
 	DEPENDS git_genmsg git_gencpp prebuild_targets
 	)
 
-px4_generate_airframes_xml(BOARD ${BOARD})
+px4_generate_parameters_xml(OUT parameters.xml 
+	BOARD ${BOARD}
+	MODULES ${config_module_list}
+	OVERRIDES ${PARAM_DEFAULT_OVERRIDES})
+
+px4_generate_airframes_xml(OUT airframes.xml BOARD ${BOARD})
+add_custom_target(xml_gen DEPENDS parameters.xml airframes.xml)
 
 #=============================================================================
 # DriverFramework

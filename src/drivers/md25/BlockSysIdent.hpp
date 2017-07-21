@@ -6,6 +6,6 @@ class BlockSysIdent : public control::Block
 public:
 	BlockSysIdent();
 private:
-	BlockParamFloat _freq;
-	BlockParamFloat _ampl;
+	control::BlockParam<float> _freq;
+	control::BlockParam<float> _ampl;
 };

@@ -1043,13 +1043,60 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 
 			// continuously reset launch detection and runway takeoff until armed
 			if (!_control_mode.flag_armed) {
+
+				//_runway_takeoff.reset(); // test: cancel le takeoff
 				_launchDetector.reset();
 				_launch_detection_state = LAUNCHDETECTION_RES_NONE;
 				_launch_detection_notify = 0;
+				//mavlink_log_info(&_mavlink_log_pub, "test zero");
+				Custom_Takeoff_Drone_Aqua = 1;
 			}
 
+			// test ajout d'un timer avant le décollage ...
+			/////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////
+			
+			if(_control_mode.flag_armed && Custom_Takeoff_Drone_Aqua) 
+			{
+				if(!flagtest)
+				{
+					mavlink_log_critical(&_mavlink_log_pub, "Début du take off custom");
+					flagtest = 1;
+				}
+
+				_runway_takeoff.reset();
+				_launchDetector.reset();
+				_launch_detection_state = LAUNCHDETECTION_RES_NONE;
+				_launch_detection_notify = 0;
+
+				// test envoie dun flag au attitude controller...
+				_att_sp.decollage_custom = true;
+
+				comp++;
+
+				// test stanby de 5 secondes avant le décollage après avoir armé lavion
+				if(comp >= 500)
+				{
+					flagtest = 0;
+					comp = 0;
+					_att_sp.decollage_custom = false;
+					Custom_Takeoff_Drone_Aqua = 0;
+					mavlink_log_critical(&_mavlink_log_pub, "Fin du take off custom");
+				}
+			}
+
+			/////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////	
+
+			/*
+			if (_control_mode.flag_armed) {
+
+				mavlink_log_info(&_mavlink_log_pub, "armed test");
+			}
+			*/			
+
 			if (_runway_takeoff.runwayTakeoffEnabled()) {
-				if (!_runway_takeoff.isInitialized()) {
+				if (!_runway_takeoff.isInitialized() && Custom_Takeoff_Drone_Aqua && !_control_mode.flag_armed) {
 					Eulerf euler(Quatf(_ctrl_state.q));
 					_runway_takeoff.init(euler.psi(), _global_pos.lat, _global_pos.lon);
 
@@ -1058,6 +1105,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 					_takeoff_ground_alt = _global_pos.alt;
 
 					mavlink_log_info(&_mavlink_log_pub, "Takeoff on runway");
+					//mavlink_log_critical(&_mavlink_log_pub, "test");				
 				}
 
 				float terrain_alt = get_terrain_altitude_takeoff(_takeoff_ground_alt, _global_pos);

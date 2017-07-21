@@ -205,7 +205,6 @@ MPU9250_mag::_measure(struct ak8963_regs data)
 
 	mag_report	mrb;
 	mrb.timestamp = hrt_absolute_time();
-	mrb.is_external = false;
 
 	/*
 	 * Align axes - note the accel & gryo are also re-aligned so this

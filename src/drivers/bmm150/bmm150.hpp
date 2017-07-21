@@ -228,6 +228,7 @@ private:
 	unsigned        _call_interval;
 
 
+	struct mag_report _report;
 	ringbuffer::RingBuffer  *_reports;
 
 	bool            _collect_phase;

@@ -115,6 +115,7 @@ set(msg_file_names
 	vehicle_control_mode.msg
 	vehicle_force_setpoint.msg
 	vehicle_global_position.msg
+	vehicle_global_velocity_setpoint.msg
 	vehicle_gps_position.msg
 	vehicle_land_detected.msg
 	vehicle_local_position.msg
@@ -125,6 +126,10 @@ set(msg_file_names
 	vehicle_status_flags.msg
 	vtol_vehicle_status.msg
 	wind_estimate.msg
+	charging_info.msg
+	charging_info_2.msg
+	wake_up_slave_info.msg
+	wake_up_slave_info_2.msg
 	)
 
 # Get absolute paths

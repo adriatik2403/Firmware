@@ -47,5 +47,7 @@
 #include <board_config.h>
 
 #elif defined (__PX4_POSIX)
-# include <board_config.h>
+#  if !defined(__PX4_UNIT_TESTS)
+#    include <board_config.h>
+#  endif
 #endif

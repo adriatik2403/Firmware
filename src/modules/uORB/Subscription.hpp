@@ -171,50 +171,29 @@ public:
 	Subscription(const struct orb_metadata *meta,
 		     unsigned interval = 0,
 		     int instance = 0,
-		     List<SubscriptionNode *> *list = nullptr):
-		SubscriptionNode(meta, interval, instance, list),
-		_data() // initialize data structure to zero
-	{}
+		     List<SubscriptionNode *> *list = nullptr);
 
-
-	Subscription(const Subscription &other):
-		SubscriptionNode(other._meta, other.getInterval(), other._instance, nullptr),
-		_data() // initialize data structure to zero
-	{}
-
+	Subscription(const Subscription & /*other*/);
 
 	/**
 	 * Deconstructor
 	 */
-	virtual ~Subscription()
-	{}
+	virtual ~Subscription();
 
 
 	/**
 	 * Create an update function that uses the embedded struct.
 	 */
-	void update()
-	{
-		SubscriptionBase::update((void *)(&_data));
-	}
-
+	void update();
 
 	/**
 	 * Create an update function that uses the embedded struct.
 	 */
-	bool check_updated()
-	{
-		return SubscriptionBase::updated();
-	}
-
+	bool check_updated();
 	/*
 	 * This function gets the T struct data
 	 * */
-	const T &get() const
-	{
-		return _data;
-	}
-
+	const T &get() const { return _data; }
 private:
 	T _data;
 };

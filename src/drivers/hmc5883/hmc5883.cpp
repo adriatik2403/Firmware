@@ -997,7 +997,6 @@ HMC5883::collect()
 	// XXX revisit for SPI part, might require a bus type IOCTL
 	unsigned dummy;
 	sensor_is_onboard = !_interface->ioctl(MAGIOCGEXTERNAL, dummy);
-	new_report.is_external = !sensor_is_onboard;
 
 	if (sensor_is_onboard) {
 		// convert onboard so it matches offboard for the

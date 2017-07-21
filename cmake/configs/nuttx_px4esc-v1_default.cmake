@@ -64,7 +64,7 @@ set(config_module_list
 	#
 	# Library modules
 	#
-	modules/systemlib/param
+	modules/param
 	modules/systemlib
 	lib/version
 

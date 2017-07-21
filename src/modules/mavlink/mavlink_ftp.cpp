@@ -355,27 +355,20 @@ MavlinkFTP::_workList(PayloadHeader *payload, bool list_hidden)
 		switch (result->d_type) {
 #ifdef __PX4_NUTTX
 
-		case DTYPE_FILE: {
+		case DTYPE_FILE:
 #else
-
-		case DT_REG: {
+		case DT_REG:
 #endif
-				// For files we get the file size as well
-				direntType = kDirentFile;
-				int ret = snprintf(buf, sizeof(buf), "%s/%s", dirPath, result->d_name);
-				bool buf_is_ok = ((ret > 0) && (ret < sizeof(buf)));
+			// For files we get the file size as well
+			direntType = kDirentFile;
+			snprintf(buf, sizeof(buf), "%s/%s", dirPath, result->d_name);
+			struct stat st;
 
-				if (buf_is_ok) {
-					struct stat st;
-
-					if (stat(buf, &st) == 0) {
-						fileSize = st.st_size;
-					}
-				}
-
-				break;
+			if (stat(buf, &st) == 0) {
+				fileSize = st.st_size;
 			}
 
+			break;
 #ifdef __PX4_NUTTX
 
 		case DTYPE_DIRECTORY:
@@ -404,12 +397,7 @@ MavlinkFTP::_workList(PayloadHeader *payload, bool list_hidden)
 
 		} else if (direntType == kDirentFile) {
 			// Files send filename and file length
-			int ret = snprintf(buf, sizeof(buf), "%s\t%d", result->d_name, fileSize);
-			bool buf_is_ok = ((ret > 0) && (ret < sizeof(buf)));
-
-			if (!buf_is_ok) {
-				buf[sizeof(buf) - 1] = '\0';
-			}
+			snprintf(buf, sizeof(buf), "%s\t%d", result->d_name, fileSize);
 
 		} else {
 			// Everything else just sends name
@@ -1007,3 +995,4 @@ void MavlinkFTP::send(const hrt_abstime t)
 		_reply(&ftp_msg);
 	} while (more_data);
 }
+

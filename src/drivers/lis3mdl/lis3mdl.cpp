@@ -945,7 +945,6 @@ LIS3MDL::collect()
 
 	unsigned dummy;
 	sensor_is_onboard = !_interface->ioctl(MAGIOCGEXTERNAL, dummy);
-	new_report.is_external = !sensor_is_onboard;
 
 	/*
 	 * RAW outputs

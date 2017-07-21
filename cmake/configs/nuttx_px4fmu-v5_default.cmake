@@ -133,7 +133,7 @@ set(config_module_list
 	# Library modules
 	#
 	modules/dataman
-	modules/systemlib/param
+	modules/param
 	modules/systemlib
 	modules/systemlib/mixer
 	modules/uORB

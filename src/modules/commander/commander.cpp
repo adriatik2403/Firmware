@@ -888,6 +888,12 @@ bool handle_command(struct vehicle_status_s *status_local, const struct safety_s
 		}
 		break;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// test print un mavlink log critical lorsquon arme le véhicule
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	case vehicle_command_s::VEHICLE_CMD_COMPONENT_ARM_DISARM: {
 
 			// Adhere to MAVLink specs, but base on knowledge that these fundamentally encode ints
@@ -926,9 +932,10 @@ bool handle_command(struct vehicle_status_s *status_local, const struct safety_s
 				}
 
 				transition_result_t arming_res = arm_disarm(cmd_arms, &mavlink_log_pub, "arm/disarm component command");
+			
 
 				if (arming_res == TRANSITION_DENIED) {
-					mavlink_log_critical(&mavlink_log_pub, "Arming not possible in this state");
+					mavlink_log_critical(&mavlink_log_pub, "REJECTING component arm cmd");
 					cmd_result = vehicle_command_s::VEHICLE_CMD_RESULT_TEMPORARILY_REJECTED;
 
 				} else {
@@ -944,6 +951,9 @@ bool handle_command(struct vehicle_status_s *status_local, const struct safety_s
 			}
 		}
 		break;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	case vehicle_command_s::VEHICLE_CMD_DO_FLIGHTTERMINATION: {
 			if (cmd->param1 > 1.5f) {
@@ -2084,6 +2094,7 @@ int commander_thread_main(int argc, char *argv[])
 										  arm_without_gps,
 										  arm_mission_required,
 										  hrt_elapsed_time(&commander_boot_timestamp))) {
+					mavlink_log_info(&mavlink_log_pub, "DISARMED by safety switch");
 					arming_state_changed = true;
 				}
 			}
@@ -2768,6 +2779,13 @@ int commander_thread_main(int argc, char *argv[])
 			_last_sp_man_arm_switch = sp_man.arm_switch;
 
 			if (arming_ret == TRANSITION_CHANGED) {
+				if (status.arming_state == vehicle_status_s::ARMING_STATE_ARMED) {
+					mavlink_log_info(&mavlink_log_pub, "ARMED by RC");
+
+				} else {
+					mavlink_log_info(&mavlink_log_pub, "DISARMED by RC");
+				}
+
 				arming_state_changed = true;
 
 			} else if (arming_ret == TRANSITION_DENIED) {
@@ -2794,7 +2812,7 @@ int commander_thread_main(int argc, char *argv[])
 
 			} else if (main_res == TRANSITION_DENIED) {
 				/* DENIED here indicates bug in the commander */
-				mavlink_log_critical(&mavlink_log_pub, "Switching to this mode is currently not possible");
+				mavlink_log_critical(&mavlink_log_pub, "main state transition denied");
 			}
 
 			/* check throttle kill switch */
@@ -3433,6 +3451,7 @@ set_main_state_rc(struct vehicle_status_s *status_local, vehicle_global_position
 
 	/* RTL switch overrides main switch */
 	if (sp_man.return_switch == manual_control_setpoint_s::SWITCH_POS_ON) {
+		warnx("RTL switch changed and ON!");
 		res = main_state_transition(status_local, commander_state_s::MAIN_STATE_AUTO_RTL, main_state_prev, &status_flags, &internal_state);
 
 		if (res == TRANSITION_DENIED) {

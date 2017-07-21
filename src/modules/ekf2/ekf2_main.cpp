@@ -260,14 +260,9 @@ private:
 
 	// range finder fusion
 	control::BlockParamExtFloat _range_noise;		// observation noise for range finder measurements (m)
-	control::BlockParamExtFloat _range_noise_scaler; // scale factor from range to range noise (m/m)
 	control::BlockParamExtFloat _range_innov_gate;	// range finder fusion innovation consistency gate size (STD)
 	control::BlockParamExtFloat _rng_gnd_clearance;	// minimum valid value for range when on ground (m)
 	control::BlockParamExtFloat _rng_pitch_offset;	// range sensor pitch offset (rad)
-	control::BlockParamExtInt
-	_rng_aid;              // enables use of a range finder even if primary height source is not range finder (EKF2_HGT_MODE != 2)
-	control::BlockParamExtFloat _rng_aid_hor_vel_max; 	// maximum allowed horizontal velocity for range aid
-	control::BlockParamExtFloat _rng_aid_height_max; 	// maximum allowed absolute altitude (AGL) for range aid
 
 	// vision estimate fusion
 	control::BlockParamExtFloat _ev_pos_noise;		// default position observation noise for exernal vision measurements (m)
@@ -395,13 +390,9 @@ Ekf2::Ekf2():
 	_fusion_mode(this, "EKF2_AID_MASK", false, _params->fusion_mode),
 	_vdist_sensor_type(this, "EKF2_HGT_MODE", false, _params->vdist_sensor_type),
 	_range_noise(this, "EKF2_RNG_NOISE", false, _params->range_noise),
-	_range_noise_scaler(this, "EKF2_RNG_SFE", false, _params->range_noise_scaler),
 	_range_innov_gate(this, "EKF2_RNG_GATE", false, _params->range_innov_gate),
 	_rng_gnd_clearance(this, "EKF2_MIN_RNG", false, _params->rng_gnd_clearance),
 	_rng_pitch_offset(this, "EKF2_RNG_PITCH", false, _params->rng_sens_pitch),
-	_rng_aid(this, "EKF2_RNG_AID", false, _params->range_aid),
-	_rng_aid_hor_vel_max(this, "EKF2_RNG_A_VMAX", false, _params->max_vel_for_range_aid),
-	_rng_aid_height_max(this, "EKF2_RNG_A_HMAX", false, _params->max_hagl_for_range_aid),
 	_ev_pos_noise(this, "EKF2_EVP_NOISE", false, _default_ev_pos_noise),
 	_ev_ang_noise(this, "EKF2_EVA_NOISE", false, _default_ev_ang_noise),
 	_ev_innov_gate(this, "EKF2_EV_GATE", false, _params->ev_innov_gate),
@@ -687,8 +678,15 @@ void Ekf2::task_main()
 				_balt_data_sum += sensors.baro_alt_meter;
 				uint32_t balt_time_ms = _balt_time_sum_ms / _balt_sample_count;
 
+				//////////////////////////////////////////////////////////////////////////////////////
+				//////////////////////////////////////////////////////////////////////////////////////
+				//////////////////////////////////////////////////////////////////////////////////////
+				//////////////////////////////////////////////////////////////////////////////////////
+				// TEST: on set le data de hauteur du baro a celui du gps donc peu importe comment on gere
+				// le choix de sourcce de hauteur entre le gps et le barometre, la donnée vient du gps
 				if (balt_time_ms - _balt_time_ms_last_used > (uint32_t)_params->sensor_interval_min_ms) {
 					float balt_data_avg = _balt_data_sum / (float)_balt_sample_count;
+					//balt_data_avg = gps.alt  * 1e-3f; // PATCH: on prend le gps comme source pour le baro...
 					_ekf.setBaroData(1000 * (uint64_t)balt_time_ms, balt_data_avg);
 					_balt_time_ms_last_used = balt_time_ms;
 					_balt_time_sum_ms = 0;
@@ -696,6 +694,10 @@ void Ekf2::task_main()
 					_balt_data_sum = 0.0f;
 
 				}
+				//////////////////////////////////////////////////////////////////////////////////////
+				//////////////////////////////////////////////////////////////////////////////////////
+				//////////////////////////////////////////////////////////////////////////////////////
+				//////////////////////////////////////////////////////////////////////////////////////
 			}
 		}
 
@@ -797,9 +799,6 @@ void Ekf2::task_main()
 
 			float velocity[3];
 			_ekf.get_velocity(velocity);
-
-			float pos_d_deriv;
-			_ekf.get_pos_d_deriv(&pos_d_deriv);
 
 			float gyro_rad[3];
 
@@ -923,7 +922,6 @@ void Ekf2::task_main()
 			lpos.vx = velocity[0];
 			lpos.vy = velocity[1];
 			lpos.vz = velocity[2];
-			lpos.z_deriv = pos_d_deriv; // vertical position time derivative (m/s)
 
 			// TODO: better status reporting
 			lpos.xy_valid = _ekf.local_position_is_valid() && !_vel_innov_preflt_fail;
@@ -991,7 +989,6 @@ void Ekf2::task_main()
 				global_pos.vel_n = velocity[0]; // Ground north velocity, m/s
 				global_pos.vel_e = velocity[1]; // Ground east velocity, m/s
 				global_pos.vel_d = velocity[2]; // Ground downside velocity, m/s
-				global_pos.pos_d_deriv = pos_d_deriv; // vertical position time derivative, m/s
 
 				global_pos.yaw = euler.psi(); // Yaw in radians -PI..+PI.
 

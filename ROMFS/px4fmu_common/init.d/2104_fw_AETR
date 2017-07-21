@@ -3,7 +3,6 @@
 # @name Standard AETR Plane
 #
 # @type Standard Plane
-# @class Plane
 #
 # @output MAIN1 aileron
 # @output MAIN2 elevator

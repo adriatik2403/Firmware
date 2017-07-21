@@ -23,6 +23,21 @@ fw_att_control start
 fw_pos_control_l1 start
 
 #
+# Start perching wall
+#
+#drone_aqua_test start
+
+#
 # Start Land Detector
 #
 land_detector start fixedwing
+
+#
+# Start Charging i2c
+#
+#charging_i2c start
+
+#
+# Start wake_up_i2c_slave
+#
+#wake_up_i2c_slave start

@@ -56,7 +56,7 @@ set(config_module_list
 	modules/sdlog2
 	modules/logger
 	modules/commander
-	modules/systemlib/param
+	modules/param
 	modules/systemlib
 	modules/systemlib/mixer
 	modules/uORB

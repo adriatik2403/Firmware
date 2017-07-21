@@ -1,11 +1,16 @@
 include(posix/px4_impl_posix)
 
-set(CMAKE_TOOLCHAIN_FILE ${PX4_SOURCE_DIR}/cmake/toolchains/Toolchain-arm-linux-gnueabihf.cmake)
+set(CMAKE_TOOLCHAIN_FILE ${PX4_SOURCE_DIR}/cmake/toolchains/Toolchain-arm-linux-gnueabihf-raspbian.cmake)
 
 add_definitions(
 	-D__PX4_POSIX_BEBOP
 	-D__DF_LINUX # Define needed DriverFramework
 	-D__DF_BEBOP # Define needed DriverFramework
+	)
+
+set(CMAKE_PROGRAM_PATH
+	"${RPI_TOOLCHAIN_DIR}/gcc-linaro-arm-linux-gnueabihf-raspbian/bin"
+	${CMAKE_PROGRAM_PATH}
 	)
 
 set(config_module_list
@@ -57,7 +62,7 @@ set(config_module_list
 	modules/sdlog2
 	modules/logger
 	modules/commander
-	modules/systemlib/param
+	modules/param
 	modules/systemlib
 	modules/systemlib/mixer
 	modules/uORB

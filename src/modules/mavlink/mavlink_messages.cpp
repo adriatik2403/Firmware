@@ -91,6 +91,12 @@
 #include <uORB/topics/wind_estimate.h>
 #include <uORB/topics/mount_orientation.h>
 #include <uORB/topics/collision_report.h>
+#include <uORB/topics/collision_report.h>
+//////////////////////////////////////////////////
+// custom uorb messages
+#include <uORB/topics/charging_info.h>
+#include <uORB/topics/charging_info_2.h>
+//////////////////////////////////////////////////
 #include <uORB/uORB.h>
 
 
@@ -2832,6 +2838,92 @@ protected:
 	}
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// class for custom mavlink message for i2c charging monitoring chip MAX17205//
+///////////////////////////////////////////////////////////////////////////////
+
+// NOTE: attention le message existe seulement pour le protocole Mavlink 2.0 et non pour Mavlink 1.0
+
+
+class MavlinkStreamCHARGINGINFO : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamCHARGINGINFO::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "CHARGING_MAV_INFO";
+	}
+
+	static uint16_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_CHARGING_MAV_INFO;
+	}
+
+	uint16_t get_id()
+	{
+		return get_id_static();
+	}
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamCHARGINGINFO(mavlink);
+	}
+
+	/// TODO: QUOI METTRE ICI ???
+	/// QUOI METTRE ICI ???????
+	unsigned get_size()
+	{
+		return _charging_sub->is_published() ? (MAVLINK_MSG_ID_CHARGING_MAV_INFO_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) : 0;
+	}
+
+private:
+	MavlinkOrbSubscription *_charging_sub;
+	uint64_t _charging_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamCHARGINGINFO(MavlinkStreamCHARGINGINFO &);
+	MavlinkStreamCHARGINGINFO &operator = (const MavlinkStreamCHARGINGINFO &);
+
+protected:
+	explicit MavlinkStreamCHARGINGINFO(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_charging_sub(_mavlink->add_orb_subscription(ORB_ID(charging_info))),
+		_charging_time(0)
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		struct charging_info_s charging = {};
+
+		if (_charging_sub->update(&_charging_time, &charging)) {
+
+			// test nothing
+		}
+
+		/* send RC channel data and RSSI */
+		mavlink_charging_mav_info_t msg = {};
+
+		msg.AvgVCell_V = charging.AvgVCell;
+		msg.AvgCell3_V = charging.AvgCell3;
+		msg.AvgCell2_V = charging.AvgCell2;
+		msg.AvgCell1_V = charging.AvgCell1;
+		msg.RepCap_mAh = charging.RepCap;
+		msg.Current_mA = charging.Current;
+		msg.AvgCurrent_mA = charging.AvgCurrent;
+		msg.TTE_hr = charging.TTE;
+		msg.TTF_hr = charging.TTF;
+		msg.RepSOC_Pourcent = charging.RepSOC;		
+
+		mavlink_msg_charging_mav_info_send_struct(_mavlink->get_channel(), &msg);
+	}
+};
+
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 
 class MavlinkStreamManualControl : public MavlinkStream
 {
@@ -4008,6 +4100,7 @@ const StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamLocalPositionSetpoint::new_instance, &MavlinkStreamLocalPositionSetpoint::get_name_static, &MavlinkStreamLocalPositionSetpoint::get_id_static),
 	new StreamListItem(&MavlinkStreamAttitudeTarget::new_instance, &MavlinkStreamAttitudeTarget::get_name_static, &MavlinkStreamAttitudeTarget::get_id_static),
 	new StreamListItem(&MavlinkStreamRCChannels::new_instance, &MavlinkStreamRCChannels::get_name_static, &MavlinkStreamRCChannels::get_id_static),
+	new StreamListItem(&MavlinkStreamCHARGINGINFO::new_instance, &MavlinkStreamCHARGINGINFO::get_name_static, &MavlinkStreamCHARGINGINFO::get_id_static), // ADD CUSTOM MESSAGE TO STREAM LIST
 	new StreamListItem(&MavlinkStreamManualControl::new_instance, &MavlinkStreamManualControl::get_name_static, &MavlinkStreamManualControl::get_id_static),
 	new StreamListItem(&MavlinkStreamOpticalFlowRad::new_instance, &MavlinkStreamOpticalFlowRad::get_name_static, &MavlinkStreamOpticalFlowRad::get_id_static),
 	new StreamListItem(&MavlinkStreamActuatorControlTarget<0>::new_instance, &MavlinkStreamActuatorControlTarget<0>::get_name_static, &MavlinkStreamActuatorControlTarget<0>::get_id_static),

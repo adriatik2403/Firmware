@@ -3,9 +3,8 @@
 # @name FX-79 Buffalo Flying Wing
 #
 # @type Flying Wing
-# @class Plane
 #
-# @maintainer Simon Wilks <simon@uaventure.com>
+# @maintainer Simon Wilks <simon@px4.io>
 #
 
 sh /etc/init.d/rc.fw_defaults

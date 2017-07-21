@@ -212,7 +212,7 @@ function(px4_add_module)
 	# default stack max to stack main
 	if(NOT STACK_MAIN AND STACK)
 		set(STACK_MAIN ${STACK})
-		message(AUTHOR_WARNING "STACK deprecated, USE STACK_MAIN instead!")
+		message(AUTHOR_WARNING "STACK deprecated, USE STACK_MAIN instead!!!!!!!!!!!!")
 	endif()
 
 	foreach(property MAIN STACK_MAIN PRIORITY)
@@ -245,7 +245,7 @@ function(px4_add_module)
 	endif()
 
 	if(INCLUDES)
-		target_include_directories(${MODULE} PRIVATE ${INCLUDES})
+		target_include_directories(${MODULE} ${INCLUDES})
 	endif()
 
 	if(DEPENDS)
@@ -458,6 +458,7 @@ function(px4_add_common_flags)
 		${PX4_BINARY_DIR}
 		${PX4_BINARY_DIR}/src
 		${PX4_BINARY_DIR}/src/modules
+		${PX4_SOURCE_DIR}/mavlink/include/mavlink
 		${PX4_SOURCE_DIR}/src
 		${PX4_SOURCE_DIR}/src/drivers/boards/${BOARD}
 		${PX4_SOURCE_DIR}/src/include

@@ -64,7 +64,7 @@
 #include "systemlib/uthash/utarray.h"
 #include "systemlib/bson/tinybson.h"
 
-//#define PARAM_NO_ORB ///< if defined, avoid uorb dependency. This disables publication of parameter_update on param change
+//#define PARAM_NO_ORB ///< if defined, avoid uorb depenency. This disables publication of parameter_update on param change
 //#define PARAM_NO_AUTOSAVE ///< if defined, do not autosave (avoids LP work queue dependency)
 
 #if !defined(PARAM_NO_ORB)
@@ -83,6 +83,7 @@
 
 static const char *param_default_file = PX4_ROOTFSDIR"/eeprom/parameters";
 static char *param_user_file = NULL;
+
 
 #if 0
 # define debug(fmt, args...)		do { warnx(fmt, ##args); } while(0)
@@ -110,8 +111,15 @@ static bool autosave_disabled = false;
 /**
  * Array of static parameter info.
  */
+#ifdef _UNIT_TEST
+extern struct param_info_s	param_array[];
+extern struct param_info_s	*param_info_base;
+extern struct param_info_s	*param_info_limit;
+#define param_info_count	(param_info_limit - param_info_base)
+#else
 static const struct param_info_s *param_info_base = (const struct param_info_s *) &px4_parameters;
-#define	param_info_count px4_parameters.param_count
+#define	param_info_count		px4_parameters.param_count
+#endif /* _UNIT_TEST */
 
 /**
  * Storage for modified parameters.
