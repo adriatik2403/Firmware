@@ -19,13 +19,13 @@ ekf2 start
 #
 # Start attitude controller
 #
-#fw_att_control start
-#fw_pos_control_l1 start
+fw_att_control start
+fw_pos_control_l1 start
 
 #
 # Start perching wall
 #
-drone_aqua_test start
+#drone_aqua_test start
 
 #
 # Start Land Detector
@@ -35,7 +35,7 @@ drone_aqua_test start
 #
 # Start Charging i2c
 #
-#charging_i2c start
+charging_i2c start
 
 #
 # Start wake_up_i2c_slave
