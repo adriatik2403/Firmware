@@ -1024,7 +1024,7 @@ void Ekf2::task_main()
 				_ekf.get_state_delayed(status.states);
 				_ekf.get_covariances(status.covariances);
 				_ekf.get_gps_check_status(&status.gps_check_fail_flags);
-				_ekf.get_control_mode(&status.control_mode_flags);
+				_ekf.get_control_mode((uint32_t*)&status.control_mode_flags);
 				_ekf.get_filter_fault_status(&status.filter_fault_flags);
 				_ekf.get_innovation_test_status(&status.innovation_check_flags, &status.mag_test_ratio,
 								&status.vel_test_ratio, &status.pos_test_ratio,
