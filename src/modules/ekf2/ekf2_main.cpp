@@ -686,7 +686,7 @@ void Ekf2::task_main()
 				// le choix de sourcce de hauteur entre le gps et le barometre, la donnée vient du gps
 				if (balt_time_ms - _balt_time_ms_last_used > (uint32_t)_params->sensor_interval_min_ms) {
 					float balt_data_avg = _balt_data_sum / (float)_balt_sample_count;
-					balt_data_avg = gps.alt  * 1e-3f; // PATCH: on prend le gps comme source pour le baro...
+					//balt_data_avg = gps.alt  * 1e-3f; // PATCH: on prend le gps comme source pour le baro...
 					_ekf.setBaroData(1000 * (uint64_t)balt_time_ms, balt_data_avg);
 					_balt_time_ms_last_used = balt_time_ms;
 					_balt_time_sum_ms = 0;
@@ -1024,7 +1024,7 @@ void Ekf2::task_main()
 				_ekf.get_state_delayed(status.states);
 				_ekf.get_covariances(status.covariances);
 				_ekf.get_gps_check_status(&status.gps_check_fail_flags);
-				_ekf.get_control_mode(&status.control_mode_flags);
+				_ekf.get_control_mode((uint32_t*)&status.control_mode_flags);
 				_ekf.get_filter_fault_status(&status.filter_fault_flags);
 				_ekf.get_innovation_test_status(&status.innovation_check_flags, &status.mag_test_ratio,
 								&status.vel_test_ratio, &status.pos_test_ratio,
