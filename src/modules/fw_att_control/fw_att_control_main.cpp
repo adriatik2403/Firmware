@@ -1176,11 +1176,13 @@ FixedwingAttitudeControl::task_main()
 						}
 						////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-						/* throttle passed through if it is finite and if no engine failure was detected */
+						/*
+						// throttle passed through if it is finite and if no engine failure was detected 
 						_actuators.control[actuator_controls_s::INDEX_THROTTLE] = (PX4_ISFINITE(throttle_sp) &&
 								!(_vehicle_status.engine_failure ||
 								  _vehicle_status.engine_failure_cmd)) ?
 								throttle_sp : 0.0f;
+						*/
 
 						///////////////////////////////////////////////////////////////////////////////////////////////////////////
 						// a decommenter
