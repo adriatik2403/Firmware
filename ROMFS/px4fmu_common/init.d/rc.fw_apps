@@ -40,4 +40,4 @@ drone_aqua_test start
 #
 # Start wake_up_i2c_slave
 #
-#wake_up_i2c_slave start
+wake_up_i2c_slave start
