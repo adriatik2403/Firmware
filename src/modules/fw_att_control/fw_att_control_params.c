@@ -46,6 +46,162 @@
  */
 
 /**
+ * Custom takeoff timing: timing 01
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T1, 2000000.0f);
+
+/**
+ * Custom takeoff timing: timing 02
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T2, 600000.0f);
+
+/**
+ * Custom takeoff timing: timing 03
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T3, 1000000.0f);
+
+/**
+ * Custom takeoff timing: timing 04
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T4, 135000.0f);
+
+/**
+ * Custom takeoff timing: timing 05
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T5, 4000000.0f);
+
+/**
+ * Custom takeoff timing: timing 06
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T6, 790000.0f);
+
+/**
+ * Custom takeoff timing: timing 07
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T7, 1000000.0f);
+
+/**
+ * Custom takeoff timing: timing 08
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T8, 2000000.0f);
+
+/**
+ * Custom takeoff timing: timing 09
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T9, 120000.0f);
+
+/**
+ * Custom takeoff timing: timing 10
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T10, 40000.0f);
+
+/**
+ * Custom takeoff timing: timing 11
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_T11, 2000000.0f);
+
+/**
+ * Custom takeoff pitch angle pendant la manoeuvre
+ *
+ *
+ * @unit s
+ * @min 0.0
+ * @max 10000000.0
+ * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CUSTM_PITCH, 0.79f);
+
+/**
  * Attitude Roll Time Constant
  *
  * This defines the latency between a roll step input and the achieved setpoint

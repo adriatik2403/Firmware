@@ -542,6 +542,7 @@ MissionBlock::mission_item_to_position_setpoint(const struct mission_item_s *ite
 			sp->type = position_setpoint_s::SETPOINT_TYPE_POSITION;
 
 		} else {
+			//sp->type = position_setpoint_s::SETPOINT_TYPE_TAKEOFFCUSTOM;			
 			sp->type = position_setpoint_s::SETPOINT_TYPE_TAKEOFF;
 
 			// set pitch and ensure that the hold time is zero

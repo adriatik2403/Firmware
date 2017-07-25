@@ -214,6 +214,19 @@ private:
 
 		int32_t bat_scale_en;			/**< Battery scaling enabled */
 
+		// timing parameter for takeoff custom
+		float take_off_custom_time_01;
+		float take_off_custom_time_02;
+		float take_off_custom_time_03;
+		float take_off_custom_time_04;
+		float take_off_custom_time_05;
+		float take_off_custom_time_06;
+		float take_off_custom_time_07;
+		float take_off_custom_time_08;
+		float take_off_custom_time_09;
+		float take_off_custom_time_10;
+		float take_off_custom_time_11;
+
 	}		_parameters{};			/**< local copies of interesting parameters */
 
 	struct {
@@ -274,6 +287,19 @@ private:
 		param_t vtol_type;
 
 		param_t bat_scale_en;
+
+		// timing parameter for takeoff custom
+		param_t take_off_custom_time_01;
+		param_t take_off_custom_time_02;
+		param_t take_off_custom_time_03;
+		param_t take_off_custom_time_04;
+		param_t take_off_custom_time_05;
+		param_t take_off_custom_time_06;
+		param_t take_off_custom_time_07;
+		param_t take_off_custom_time_08;
+		param_t take_off_custom_time_09;
+		param_t take_off_custom_time_10;
+		param_t take_off_custom_time_11;
 
 	}		_parameter_handles{};		/**< handles for interesting parameters */
 
@@ -471,6 +497,19 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 
 	_parameter_handles.bat_scale_en = param_find("FW_BAT_SCALE_EN");
 
+	// timing for each step of aqua drone take off
+	_parameter_handles.take_off_custom_time_01 = param_find("TK_CUSTM_T1");
+	_parameter_handles.take_off_custom_time_02 = param_find("TK_CUSTM_T2");
+	_parameter_handles.take_off_custom_time_03 = param_find("TK_CUSTM_T3");
+	_parameter_handles.take_off_custom_time_04 = param_find("TK_CUSTM_T4");
+	_parameter_handles.take_off_custom_time_05 = param_find("TK_CUSTM_T5");
+	_parameter_handles.take_off_custom_time_06 = param_find("TK_CUSTM_T6");
+	_parameter_handles.take_off_custom_time_07 = param_find("TK_CUSTM_T7");
+	_parameter_handles.take_off_custom_time_08 = param_find("TK_CUSTM_T8");
+	_parameter_handles.take_off_custom_time_09 = param_find("TK_CUSTM_T9");
+	_parameter_handles.take_off_custom_time_10 = param_find("TK_CUSTM_T10");
+	_parameter_handles.take_off_custom_time_11 = param_find("TK_CUSTM_T11");
+
 	/* fetch initial parameter values */
 	parameters_update();
 }
@@ -577,6 +616,19 @@ FixedwingAttitudeControl::parameters_update()
 	param_get(_parameter_handles.vtol_type, &_parameters.vtol_type);
 
 	param_get(_parameter_handles.bat_scale_en, &_parameters.bat_scale_en);
+
+	// timing for each step of aqua drone take off
+	param_get(_parameter_handles.take_off_custom_time_01, &_parameters.take_off_custom_time_01);
+	param_get(_parameter_handles.take_off_custom_time_02, &_parameters.take_off_custom_time_02);
+	param_get(_parameter_handles.take_off_custom_time_03, &_parameters.take_off_custom_time_03);
+	param_get(_parameter_handles.take_off_custom_time_04, &_parameters.take_off_custom_time_04);
+	param_get(_parameter_handles.take_off_custom_time_05, &_parameters.take_off_custom_time_05);
+	param_get(_parameter_handles.take_off_custom_time_06, &_parameters.take_off_custom_time_06);
+	param_get(_parameter_handles.take_off_custom_time_07, &_parameters.take_off_custom_time_07);
+	param_get(_parameter_handles.take_off_custom_time_08, &_parameters.take_off_custom_time_08);
+	param_get(_parameter_handles.take_off_custom_time_09, &_parameters.take_off_custom_time_09);
+	param_get(_parameter_handles.take_off_custom_time_10, &_parameters.take_off_custom_time_10);
+	param_get(_parameter_handles.take_off_custom_time_11, &_parameters.take_off_custom_time_11);
 
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
@@ -760,13 +812,29 @@ FixedwingAttitudeControl::task_main()
 
 	_task_running = true;
 
+	//////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	// flag des steps pour le decolage custom
+        static bool mode_seq0 = false;
+        static bool mode_seq1 = false;
+        static bool mode_seq2 = false;
+        static bool mode_seq3 = false;
+        static bool mode_seq4 = false;
+        static bool mode_seq5 = false;       
+        static bool mode_seq6 = false;
+        static bool mode_seq7 = false;
+        static bool mode_seq8 = false;
+        static bool mode_seq9 = false;
+        static bool mode_seq10 = false;
+
+        static bool mode_custom = false;
+
+	static int present_time = hrt_absolute_time(); // timer pour les etapes du decollage
+	//////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+
 	while (!_task_should_exit) {
 		static int loop_counter = 0;
-
-		////////////////////////////////////////////////////////////////////
-		// pour test manoeuvre de décollage custom commander via le position controller
-		static int compteur = 0;
-		////////////////////////////////////////////////////////////////////
 
 		/* wait for up to 500ms for data */
 		int pret = px4_poll(&fds[0], (sizeof(fds) / sizeof(fds[0])), 100);
@@ -1093,12 +1161,10 @@ FixedwingAttitudeControl::task_main()
 							}
 						}
 
-						///////////////////////////////////////////////////////////////////////////////
 						// TEST CONTROL DU PITCH
 						float pitch_u = _pitch_ctrl.control_euler_rate(control_input);
 						_actuators.control[actuator_controls_s::INDEX_PITCH] = (PX4_ISFINITE(pitch_u)) ? pitch_u + _parameters.trim_pitch :
 								_parameters.trim_pitch;
-						///////////////////////////////////////////////////////////////////////////////
 
 						if (!PX4_ISFINITE(pitch_u)) {
 							_pitch_ctrl.reset_integrator();
@@ -1145,56 +1211,244 @@ FixedwingAttitudeControl::task_main()
 							}
 						}
 
-						////////////////////////////////////////////////////////////////////////////////////////////////////////
-						if(!_att_sp.decollage_custom)
+						///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						// il ny a pas de decollage custom -> on reset les parametres
+						if(!_att_sp.decollage_custom && mode_custom == false)
 						{
-							compteur = 0;
+							_actuators_airframe.control[2] = -1.0f;
+                					_actuators_airframe.control[3] = -1.0f;
+                					_actuators_airframe.control[1] = 0.0f;
+
+							present_time = hrt_absolute_time();
+
+						        mode_seq0 = false;
+						        mode_seq1 = false;
+						        mode_seq2 = false;
+						        mode_seq3 = false;
+						        mode_seq4 = false;
+						        mode_seq5 = false;       
+						        mode_seq6 = false;
+						        mode_seq7 = false;
+						        mode_seq8 = false;
+						        mode_seq9 = false;
+						        mode_seq10 = false;
 
 						}
-
-						if(_att_sp.decollage_custom)
+						else if(_att_sp.decollage_custom && mode_custom == false) // il y a un decolage custom -> on active le flag qui permet d'effectuer la séquence
 						{
-							_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.1f;
-
-							// 
-							if(compteur++ >= 400) // NOTE: la loop du att control roule a 200 Hz (je crois...)
-							{
-								_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
-								//compteur = 0;
-							}
+							mode_custom = true;
+							mode_seq0 = true;
 						}
 						else
 						{
+
+						}
+
+						if(mode_custom == true)
+						{
+
+							// WAIT AVANT LA SEQUENCE (FALCULTATIF)
+							if(mode_seq0)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; 
+						                _actuators_airframe.control[2] = -1.0f;                             	
+						                _actuators_airframe.control[3] = -1.0f;
+						                _actuators_airframe.control[1] = 0.0f;
+						     
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_01) // 2 sec
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq0 = false;
+						                   mode_seq1 = true;
+						                }
+						        }
+
+						        // COMMENCE À ACTIVER LE MUSCLE WIRE DU VERROU HORIZONTAL
+						        if(mode_seq1)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;  
+						                _actuators_airframe.control[2] = -1.0f;                                 	
+						            	_actuators_airframe.control[3] = 1.0f;
+						            	_actuators_airframe.control[1] = 0.0f;
+										
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_02) // 600 ms
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq1 = false;
+						                   mode_seq2 = true;             
+						                }               
+						        }
+
+						        // ACTIVE LE SERVO POUR REMONTER LE PIVOT EN CONTINUANT DACTIVER LE MEME MUSCLE WIRE
+						        if(mode_seq2)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;  
+						                _actuators_airframe.control[2] = -1.0f;                                	
+						                _actuators_airframe.control[3] = 1.0f;
+						                _actuators_airframe.control[1] = -0.4f;
+						               
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_03) // 1 sec
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq2 = false;
+						                   mode_seq3 = true;
+						                }               
+						        }  
+
+						        // DÉSACTIVE LE MUSCLE WIRE ET FINI LA SEQUENCE POUR REMONTER LE PIVOT
+						        if(mode_seq3)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; 
+						                _actuators_airframe.control[2] = -1.0f;                              	
+						                _actuators_airframe.control[3] = -1.0f;
+						                _actuators_airframe.control[1] = -0.4f;
+						             
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_04) // 135 ms
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq3 = false;
+						                   mode_seq4 = true;
+						                }                              
+						        }   
+
+						        // DÉSACTIVE TOUT UNE FOIS LE PIVOT REMONTÉ
+						        if(mode_seq4)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;  
+						                _actuators_airframe.control[2] = -1.0f;                 
+						                _actuators_airframe.control[3] = -1.0f;
+						                _actuators_airframe.control[1] = 0.0f;
+						                
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_05) // 4 sec
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq4 = false;
+						                   mode_seq5 = true;
+						                }                                     
+						        } 
+
+						        // REMET LE SERVO DU PIVOT DANS SA POSITION INITIALE
+						        if(mode_seq5)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;  
+						                _actuators_airframe.control[2] = -1.0f;                         	
+						                _actuators_airframe.control[3] = -1.0f;
+						                _actuators_airframe.control[1] = 0.4f;
+						                
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_06) // 790 ms
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq5 = false;
+						                   mode_seq6 = true;
+						                }                                
+						        }   
+
+						        // ARRETE LE SERVO DU PIVOT
+						        if(mode_seq6)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
+						                _actuators_airframe.control[2] = -1.0f;
+						                _actuators_airframe.control[3] = -1.0f;
+						                _actuators_airframe.control[1] = 0.0f;
+						                
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_07) // 1 sec
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq6 = false;
+						                   mode_seq7 = true;
+						                }                                             
+						        }
+
+							// IDLE DU THRUST A 20% PENDANT 2 SEC
+						        if(mode_seq7)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.20f;
+						                _actuators_airframe.control[2] = -1.0f; // muscle wire pos up pivot
+						                _actuators_airframe.control[3] = -1.0f; // muscle wire pos down pivot
+						                _actuators_airframe.control[1] = 0.0f;	// servo pivot
+
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_08) // 2 sec
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq7 = false;
+						                   mode_seq8 = true;
+						        	}
+            						}
+
+            						// FULL THROTTLE PENDANT 0.12 SEC
+						        if(mode_seq8)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
+						                _actuators_airframe.control[2] = -1.0f;
+						                _actuators_airframe.control[3] = -1.0f;
+						                _actuators_airframe.control[1] = 0.0f;
+
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_09) // 120 ms
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq8 = false;
+						                   mode_seq9 = true;
+						                }
+						        }
+
+						        // ACTIVE LE MUSCLE WIRE UP POUR FAIRE BASCULER LA TETE A LHORIZONTAL
+						        if(mode_seq9)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
+						                _actuators_airframe.control[2] = 1.0f;
+						                _actuators_airframe.control[3] = -1.0f;
+						                _actuators_airframe.control[1] = 0.0f;
+
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_10) // 40 ms
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq9 = false;
+						                   mode_seq10 = true;
+						                }
+						        }
+
+						        //ÉTEINT LE MUSCLE WIRE ET MAINTIENT FULL THROTTLE POUR UN CERTAIN TEMPS (A DETERMINER)
+						        if(mode_seq10)
+						        {
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
+						                _actuators_airframe.control[2] = -1.0f;
+						                _actuators_airframe.control[3] = -1.0f;
+						                _actuators_airframe.control[1] = 0.0f;
+
+						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_11) // 2 sec
+						                {
+						                   present_time = hrt_absolute_time();
+						                   mode_seq10 = false;
+						                   //mode_seq11 = true;
+						                   mode_custom = false; // la manoeuvre de décollage est terminée: on remet le flag a 0
+						                }                
+						        }	
+						}
+						else // si pas de decollage custom -> le throttle vient du pos controller
+						{
+							
 							/////////////////////////////////////////////////////////////////////////////////////////
 							// test offset throttle en att control enabled (mission et stabilized je crois)
-							/* throttle passed through if it is finite and if no engine failure was detected */
+							//throttle passed through if it is finite and if no engine failure was detected
 							_actuators.control[actuator_controls_s::INDEX_THROTTLE] = (PX4_ISFINITE(throttle_sp) &&
 									!(_vehicle_status.engine_failure ||
 									  _vehicle_status.engine_failure_cmd)) ?
 									throttle_sp : 0.0f;
 							/////////////////////////////////////////////////////////////////////////////////////////
+
+													// scale effort by battery status
+							if (_parameters.bat_scale_en && _battery_status.scale > 0.0f &&
+							    _actuators.control[actuator_controls_s::INDEX_THROTTLE] > 0.1f) {
+								_actuators.control[actuator_controls_s::INDEX_THROTTLE] *= _battery_status.scale;
+							}
+							
 						}
-						////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-						/*
-						// throttle passed through if it is finite and if no engine failure was detected 
-						_actuators.control[actuator_controls_s::INDEX_THROTTLE] = (PX4_ISFINITE(throttle_sp) &&
-								!(_vehicle_status.engine_failure ||
-								  _vehicle_status.engine_failure_cmd)) ?
-								throttle_sp : 0.0f;
-						*/
-
-						///////////////////////////////////////////////////////////////////////////////////////////////////////////
-						// a decommenter
-						/*
-						// scale effort by battery status
-						if (_parameters.bat_scale_en && _battery_status.scale > 0.0f &&
-						    _actuators.control[actuator_controls_s::INDEX_THROTTLE] > 0.1f) {
-							_actuators.control[actuator_controls_s::INDEX_THROTTLE] *= _battery_status.scale;
-						}
-						*/
-						///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+						///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 						if (!PX4_ISFINITE(throttle_sp)) {
 							if (_debug && loop_counter % 10 == 0) {
@@ -1211,6 +1465,7 @@ FixedwingAttitudeControl::task_main()
 					}
 
 				} else {
+
 					// pure rate control
 					_roll_ctrl.set_bodyrate_setpoint(_manual.y * _parameters.acro_max_x_rate_rad);
 					_pitch_ctrl.set_bodyrate_setpoint(-_manual.x * _parameters.acro_max_y_rate_rad);
@@ -1261,6 +1516,32 @@ FixedwingAttitudeControl::task_main()
 				_actuators.control[actuator_controls_s::INDEX_YAW] = _manual.r * _parameters.man_yaw_scale + _parameters.trim_yaw;
 				_actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z;
 			}
+
+			
+			// si on switch en mode manual ou stabilized, on reset la sequence de decollage custom
+			if(!_vcontrol_mode.flag_control_attitude_enabled || !_vcontrol_mode.flag_control_rates_enabled)
+			{
+				_actuators_airframe.control[2] = -1.0f;
+				_actuators_airframe.control[3] = -1.0f;
+				_actuators_airframe.control[1] = 0.0f;
+
+				present_time = hrt_absolute_time();
+
+			        mode_seq0 = false;
+			        mode_seq1 = false;
+			        mode_seq2 = false;
+			        mode_seq3 = false;
+			        mode_seq4 = false;
+			        mode_seq5 = false;       
+			        mode_seq6 = false;
+			        mode_seq7 = false;
+			        mode_seq8 = false;
+			        mode_seq9 = false;
+			        mode_seq10 = false;
+
+			        mode_custom = false;
+			}
+			
 
 			// Add feed-forward from roll control output to yaw control output
 			// This can be used to counteract the adverse yaw effect when rolling the plane
