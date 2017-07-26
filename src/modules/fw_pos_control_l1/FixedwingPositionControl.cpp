@@ -74,6 +74,21 @@ FixedwingPositionControl::FixedwingPositionControl() :
 	_parameter_handles.land_use_terrain_estimate = param_find("FW_LND_USETER");
 	_parameter_handles.land_airspeed_scale = param_find("FW_LND_AIRSPD_SC");
 
+	// timing for each step of aqua drone take off
+	_parameter_handles.take_off_custom_time_01 = param_find("TK_CUSTM_T1");
+	_parameter_handles.take_off_custom_time_02 = param_find("TK_CUSTM_T2");
+	_parameter_handles.take_off_custom_time_03 = param_find("TK_CUSTM_T3");
+	_parameter_handles.take_off_custom_time_04 = param_find("TK_CUSTM_T4");
+	_parameter_handles.take_off_custom_time_05 = param_find("TK_CUSTM_T5");
+	_parameter_handles.take_off_custom_time_06 = param_find("TK_CUSTM_T6");
+	_parameter_handles.take_off_custom_time_07 = param_find("TK_CUSTM_T7");
+	_parameter_handles.take_off_custom_time_08 = param_find("TK_CUSTM_T8");
+	_parameter_handles.take_off_custom_time_09 = param_find("TK_CUSTM_T9");
+	_parameter_handles.take_off_custom_time_10 = param_find("TK_CUSTM_T10");
+	_parameter_handles.take_off_custom_time_11 = param_find("TK_CUSTM_T11");
+
+	_parameter_handles.take_off_custom_pitch = param_find("TK_CUSTM_PITCH");
+
 	_parameter_handles.time_const = 			param_find("FW_T_TIME_CONST");
 	_parameter_handles.time_const_throt = 			param_find("FW_T_THRO_CONST");
 	_parameter_handles.min_sink_rate = 			param_find("FW_T_SINK_MIN");
@@ -180,6 +195,20 @@ FixedwingPositionControl::parameters_update()
 	param_get(_parameter_handles.land_H1_virt, &(_parameters.land_H1_virt));
 	param_get(_parameter_handles.land_flare_alt_relative, &(_parameters.land_flare_alt_relative));
 	param_get(_parameter_handles.land_thrust_lim_alt_relative, &(_parameters.land_thrust_lim_alt_relative));
+
+	// timing for each step of aqua drone take off
+	param_get(_parameter_handles.take_off_custom_time_01, &_parameters.take_off_custom_time_01);
+	param_get(_parameter_handles.take_off_custom_time_02, &_parameters.take_off_custom_time_02);
+	param_get(_parameter_handles.take_off_custom_time_03, &_parameters.take_off_custom_time_03);
+	param_get(_parameter_handles.take_off_custom_time_04, &_parameters.take_off_custom_time_04);
+	param_get(_parameter_handles.take_off_custom_time_05, &_parameters.take_off_custom_time_05);
+	param_get(_parameter_handles.take_off_custom_time_06, &_parameters.take_off_custom_time_06);
+	param_get(_parameter_handles.take_off_custom_time_07, &_parameters.take_off_custom_time_07);
+	param_get(_parameter_handles.take_off_custom_time_08, &_parameters.take_off_custom_time_08);
+	param_get(_parameter_handles.take_off_custom_time_09, &_parameters.take_off_custom_time_09);
+	param_get(_parameter_handles.take_off_custom_time_10, &_parameters.take_off_custom_time_10);
+	param_get(_parameter_handles.take_off_custom_time_11, &_parameters.take_off_custom_time_11);
+	param_get(_parameter_handles.take_off_custom_pitch, &_parameters.take_off_custom_pitch);
 
 	/* check if negative value for 2/3 of flare altitude is set for throttle cut */
 	if (_parameters.land_thrust_lim_alt_relative < 0.0f) {
@@ -607,6 +636,11 @@ bool
 FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, const math::Vector<2> &ground_speed,
 		const position_setpoint_s &pos_sp_prev, const position_setpoint_s &pos_sp_curr)
 {
+	static int time_begin_take_off = 0;
+	static bool flag_message_takeoff_normal = false;
+	static bool flag_message_takeoff_custom = false;
+	static int test = 3;
+
 	float dt = 0.01f;
 
 	if (_control_position_last_called > 0) {
@@ -931,9 +965,18 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 			 * horizontal limit (with some tolerance)
 			 * The horizontal limit is only applied when we are in front of the wp
 			 */
+
 			if (((_global_pos.alt < terrain_alt + _landingslope.flare_relative_alt()) &&
 			     (wp_distance_save < _landingslope.flare_length() + 5.0f)) ||
 			    _land_noreturn_vertical) {  //checking for land_noreturn to avoid unwanted climb out
+
+				// test message
+			    	mavlink_log_info(&_mavlink_log_pub, "if");
+
+			    	if(test == 1)
+				{
+					
+				}
 
 				/* land with minimal speed */
 
@@ -996,7 +1039,12 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 
 				_flare_curve_alt_rel_last = flare_curve_alt_rel;
 
+				//}
+
 			} else {
+
+				// test message
+			    	mavlink_log_info(&_mavlink_log_pub, "else");
 
 				/* intersect glide slope:
 				 * minimize speed to approach speed
@@ -1038,6 +1086,8 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 							   false,
 							   radians(_parameters.pitch_limit_min));
 			}
+			
+
 
 		} else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF) {
 
@@ -1049,13 +1099,19 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 				_launch_detection_state = LAUNCHDETECTION_RES_NONE;
 				_launch_detection_notify = 0;
 				//mavlink_log_info(&_mavlink_log_pub, "test zero");
-				Custom_Takeoff_Drone_Aqua = 1;
+				//Custom_Takeoff_Drone_Aqua = 1;
+
+				time_begin_take_off = hrt_absolute_time();
+				_att_sp.decollage_custom = false;
+
+				flag_message_takeoff_normal = false;
+				flag_message_takeoff_custom = false;
 			}
 
 			// test ajout d'un timer avant le décollage ...
 			/////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////
-			
+			/////////////////////////////////////////////////////////////////////////		
+			/*
 			if(_control_mode.flag_armed && Custom_Takeoff_Drone_Aqua) 
 			{
 				if(!flagtest)
@@ -1084,19 +1140,12 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 					mavlink_log_critical(&_mavlink_log_pub, "Fin du take off custom");
 				}
 			}
-
+			*/
 			/////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////	
-
-			/*
-			if (_control_mode.flag_armed) {
-
-				mavlink_log_info(&_mavlink_log_pub, "armed test");
-			}
-			*/			
+			/////////////////////////////////////////////////////////////////////////				
 
 			if (_runway_takeoff.runwayTakeoffEnabled()) {
-				if (!_runway_takeoff.isInitialized() && Custom_Takeoff_Drone_Aqua && !_control_mode.flag_armed) {
+				if (!_runway_takeoff.isInitialized() ){//&& Custom_Takeoff_Drone_Aqua && !_control_mode.flag_armed) {
 					Eulerf euler(Quatf(_ctrl_state.q));
 					_runway_takeoff.init(euler.psi(), _global_pos.lat, _global_pos.lon);
 
@@ -1135,11 +1184,43 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 							   radians(_runway_takeoff.getMinPitch(pos_sp_curr.pitch_min, 10.0f, _parameters.pitch_limit_min)),
 							   tecs_status_s::TECS_MODE_TAKEOFF);
 
+				///////////////////////////////////////////////////////////////////////////////////////////////////
+				///////////////////////////////////////////////////////////////////////////////////////////////////
+				///////////////////////////////////////////////////////////////////////////////////////////////////
 				// assign values
-				_att_sp.roll_body = _runway_takeoff.getRoll(_l1_control.nav_roll());
-				_att_sp.yaw_body = _runway_takeoff.getYaw(_l1_control.nav_bearing());
-				_att_sp.fw_control_yaw = _runway_takeoff.controlYaw();
-				_att_sp.pitch_body = _runway_takeoff.getPitch(get_tecs_pitch());
+				// attitude setpoint de base
+				if(hrt_absolute_time() - time_begin_take_off >= (int)total_time_takeoff){			
+					_att_sp.roll_body = _runway_takeoff.getRoll(_l1_control.nav_roll());
+					_att_sp.yaw_body = _runway_takeoff.getYaw(_l1_control.nav_bearing());
+					_att_sp.fw_control_yaw = _runway_takeoff.controlYaw();
+					_att_sp.pitch_body = _runway_takeoff.getPitch(get_tecs_pitch());
+
+					if(!flag_message_takeoff_normal)
+					{
+						mavlink_log_info(&_mavlink_log_pub,"take off normal");
+						flag_message_takeoff_normal = true;
+					}
+
+					_att_sp.decollage_custom = false;
+				// attitude setpoint lors du decollage custom du drone aquatique
+				} else if((hrt_absolute_time() - time_begin_take_off < (int)total_time_takeoff) && _control_mode.flag_armed) {
+
+					if(!flag_message_takeoff_custom)
+					{
+						mavlink_log_info(&_mavlink_log_pub,"take off custom");
+						flag_message_takeoff_custom = true;
+					}
+
+					_att_sp.roll_body = 0.0f;
+					_att_sp.yaw_body = 0.0f;
+					_att_sp.fw_control_yaw = 0.0f;
+					_att_sp.pitch_body = _parameters.take_off_custom_pitch;
+
+					_att_sp.decollage_custom = true;
+				}
+				///////////////////////////////////////////////////////////////////////////////////////////////////
+				///////////////////////////////////////////////////////////////////////////////////////////////////
+				///////////////////////////////////////////////////////////////////////////////////////////////////
 
 				// reset integrals except yaw (which also counts for the wheel controller)
 				_att_sp.roll_reset_integral = _runway_takeoff.resetIntegrators();
@@ -1420,7 +1501,29 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 			reset_landing_state();
 			reset_takeoff_state();
 		}
+
 	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	if(!_control_mode.flag_control_auto_enabled)
+	{
+		time_begin_take_off = hrt_absolute_time();
+		_att_sp.decollage_custom = false;
+
+		flag_message_takeoff_normal = false;
+		flag_message_takeoff_custom = false;
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// takeoff custom: reset flag if takeoff dected before end of custom takeoff...
+	if(pos_sp_curr.type != position_setpoint_s::SETPOINT_TYPE_TAKEOFF)
+	{
+		_att_sp.decollage_custom = false;
+	}
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/* Copy thrust output for publication */
 	if (_control_mode_current == FW_POSCTRL_MODE_AUTO && // launchdetector only available in auto
@@ -1435,9 +1538,15 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 
 	} else if (_control_mode_current == FW_POSCTRL_MODE_AUTO &&
 		   pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF &&
-		   _runway_takeoff.runwayTakeoffEnabled()) {
+		   _runway_takeoff.runwayTakeoffEnabled() && (hrt_absolute_time() - time_begin_take_off >= (int)total_time_takeoff)) {
 
 		_att_sp.thrust = _runway_takeoff.getThrottle(min(get_tecs_thrust(), throttle_max));
+
+	} else if (_control_mode_current == FW_POSCTRL_MODE_AUTO && // dsactive le throttle setpoint si pas en mde take_off normal
+		   pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF &&
+		   _runway_takeoff.runwayTakeoffEnabled() && (hrt_absolute_time() - time_begin_take_off < (int)total_time_takeoff)) {
+
+		_att_sp.thrust = 0.0f;
 
 	} else if (_control_mode_current == FW_POSCTRL_MODE_AUTO &&
 		   pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_IDLE) {
@@ -1559,6 +1668,16 @@ FixedwingPositionControl::task_main()
 		_task_should_exit = true;
 	}
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// update time the custom take off take to be executed
+	total_time_takeoff = _parameters.take_off_custom_time_01 + _parameters.take_off_custom_time_02 + _parameters.take_off_custom_time_03
+		+ _parameters.take_off_custom_time_04 + _parameters.take_off_custom_time_05 + _parameters.take_off_custom_time_06
+		+ _parameters.take_off_custom_time_07 + _parameters.take_off_custom_time_08 + _parameters.take_off_custom_time_09
+		+ _parameters.take_off_custom_time_10 + _parameters.take_off_custom_time_11;
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	/* wakeup source(s) */
 	px4_pollfd_struct_t fds[2];
 
@@ -1599,6 +1718,16 @@ FixedwingPositionControl::task_main()
 
 			/* update parameters from storage */
 			parameters_update();
+
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// update time the custom take off take to be executed
+			total_time_takeoff = _parameters.take_off_custom_time_01 + _parameters.take_off_custom_time_02 + _parameters.take_off_custom_time_03
+				+ _parameters.take_off_custom_time_04 + _parameters.take_off_custom_time_05 + _parameters.take_off_custom_time_06
+				+ _parameters.take_off_custom_time_07 + _parameters.take_off_custom_time_08 + _parameters.take_off_custom_time_09
+				+ _parameters.take_off_custom_time_10 + _parameters.take_off_custom_time_11;
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		}
 
 		/* only run controller if position changed */

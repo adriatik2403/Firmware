@@ -236,6 +236,7 @@ private:
 	int Custom_Takeoff_Drone_Aqua{0};
 	int flagtest{0};
 	int comp{0};
+	float total_time_takeoff{0.0f};
 
 	ECL_L1_Pos_Controller	_l1_control;
 	TECS			_tecs;
@@ -303,6 +304,22 @@ private:
 		float land_airspeed_scale;
 
 		int32_t vtol_type;
+
+		// timing parameter for takeoff custom
+		float take_off_custom_time_01;
+		float take_off_custom_time_02;
+		float take_off_custom_time_03;
+		float take_off_custom_time_04;
+		float take_off_custom_time_05;
+		float take_off_custom_time_06;
+		float take_off_custom_time_07;
+		float take_off_custom_time_08;
+		float take_off_custom_time_09;
+		float take_off_custom_time_10;
+		float take_off_custom_time_11;
+
+		float take_off_custom_pitch;
+
 	} _parameters{};					///< local copies of interesting parameters */
 
 	struct {
@@ -361,6 +378,21 @@ private:
 		param_t land_airspeed_scale;
 
 		param_t vtol_type;
+
+		// timing parameter for takeoff custom
+		param_t take_off_custom_time_01;
+		param_t take_off_custom_time_02;
+		param_t take_off_custom_time_03;
+		param_t take_off_custom_time_04;
+		param_t take_off_custom_time_05;
+		param_t take_off_custom_time_06;
+		param_t take_off_custom_time_07;
+		param_t take_off_custom_time_08;
+		param_t take_off_custom_time_09;
+		param_t take_off_custom_time_10;
+		param_t take_off_custom_time_11;
+		param_t take_off_custom_pitch;
+
 	} _parameter_handles {};				///< handles for interesting parameters */
 
 
