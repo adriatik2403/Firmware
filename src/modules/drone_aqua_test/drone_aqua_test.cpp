@@ -993,12 +993,13 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = -1.0f;
 	                _actuators_airframe.control[1] = 0.0f;
 	     
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_01) // 2 sec
+	                //if(hrt_absolute_time() - present_time >= 2000000)
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_01) // 2 sec	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq0 = false;
 	                   mode_seq1 = true;
-	                   flagidle = true;
+	                   //flagidle = true;
 	                }
 	        }
 
@@ -1010,7 +1011,8 @@ DroneAquaTest::task_main()
 	            	_actuators_airframe.control[3] = 1.0f;
 	            	_actuators_airframe.control[1] = 0.0f;
 					
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_02) // 600 ms
+	                //if(hrt_absolute_time() - present_time >= 600000)//(int)_parameters.take_off_custom_time_02) // 600 ms
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_02) // 600 ms	            
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq1 = false;
@@ -1026,7 +1028,8 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = 1.0f;
 	                _actuators_airframe.control[1] = -0.4f;
 	               
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_03) // 1 sec
+	                //if(hrt_absolute_time() - present_time >= 1000000)//(int)_parameters.take_off_custom_time_03) // 1 sec
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_03) // 1 sec	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq2 = false;
@@ -1042,7 +1045,8 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = -1.0f;
 	                _actuators_airframe.control[1] = -0.4f;
 	             
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_04) // 135 ms
+	                //if(hrt_absolute_time() - present_time >= 135000)//(int)_parameters.take_off_custom_time_04) // 135 ms
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_04) // 135 ms	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq3 = false;
@@ -1058,7 +1062,8 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = -1.0f;
 	                _actuators_airframe.control[1] = 0.0f;
 	                
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_05) // 4 sec
+	                //if(hrt_absolute_time() - present_time >= 4000000)//(int)_parameters.take_off_custom_time_05) // 4 sec
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_05) // 4 sec	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq4 = false;
@@ -1074,7 +1079,8 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = -1.0f;
 	                _actuators_airframe.control[1] = 0.4f;
 	                
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_06) // 790 ms
+	                //if(hrt_absolute_time() - present_time >= 790000)//(int)_parameters.take_off_custom_time_06) // 790 ms
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_06) // 790 ms	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq5 = false;
@@ -1090,7 +1096,8 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = -1.0f;
 	                _actuators_airframe.control[1] = 0.0f;
 	                
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_07) // 1 sec
+	                //if(hrt_absolute_time() - present_time >= 1000000)//(int)_parameters.take_off_custom_time_07) // 1 sec
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_07) // 1 sec	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq6 = false;
@@ -1106,7 +1113,8 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = -1.0f; // muscle wire pos down pivot
 	                _actuators_airframe.control[1] = 0.0f;	// servo pivot
 
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_08) // 2 sec
+	                //if(hrt_absolute_time() - present_time >= 2000000)//(int)_parameters.take_off_custom_time_08) // 2 sec
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_08) // 2 sec	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq7 = false;
@@ -1122,7 +1130,8 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = -1.0f;
 	                _actuators_airframe.control[1] = 0.0f;
 
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_09) // 120 ms
+	                //if(hrt_absolute_time() - present_time >= 120000)//(int)_parameters.take_off_custom_time_09) // 120 ms
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_09) // 120 ms	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq8 = false;
@@ -1138,7 +1147,8 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = -1.0f;
 	                _actuators_airframe.control[1] = 0.0f;
 
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_10) // 40 ms
+	                //if(hrt_absolute_time() - present_time >= 35000)//(int)_parameters.take_off_custom_time_10) // 40 ms
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_10) // 40 ms	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq9 = false;
@@ -1154,7 +1164,8 @@ DroneAquaTest::task_main()
 	                _actuators_airframe.control[3] = -1.0f;
 	                _actuators_airframe.control[1] = 0.0f;
 
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_11) // 2 sec
+	                //if(hrt_absolute_time() - present_time >= 2000000)//(int)_parameters.take_off_custom_time_11) // 2 sec
+	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_11) // 2 sec	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq10 = false;
@@ -1175,11 +1186,14 @@ DroneAquaTest::task_main()
 
 		_actuators.control[actuator_controls_s::INDEX_THROTTLE] = _actuators.control[actuator_controls_s::INDEX_THROTTLE];
 
+		
                 if(flagidle == false)
                 {
+               	    flagidle = true;
                     present_time = hrt_absolute_time();
                     mode_seq0 = true;
                 }
+                
 
 	    } else {
                 	_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; // quant nuttx boot le thrust est a 0
@@ -1203,6 +1217,7 @@ DroneAquaTest::task_main()
                 	flagidle = false;
 		}
 
+
             // SÉCURITÉ -> MODE MANUEL ENCLENCHÉ
             if(_manual.kill_switch == manual_control_setpoint_s::SWITCH_POS_ON) // si en mode manuel
             {
@@ -1224,6 +1239,8 @@ DroneAquaTest::task_main()
         		mode_seq10 = false;
         		mode_seq11 = false;
             }
+            
+            
 
 			/* lazily publish the setpoint only once available */
 			_actuators.timestamp = hrt_absolute_time();
