@@ -392,12 +392,6 @@ private:
 	int		parameters_update();
 
 	/**
-	 * Update control outputs
-	 *
-	 */
-	void		control_update();
-
-	/**
 	 * Check for changes in vehicle control mode.
 	 */
 	void		vehicle_control_mode_poll();
@@ -426,22 +420,6 @@ private:
 	 * Check for vehicle status updates.
 	 */
 	void		vehicle_status_poll();
-
-	/**
-	 * Check for vehicle land detected updates.
-	 */
-	void		vehicle_land_detected_poll();
-
-
-
-	/**
-	 * fonction qui effectu la sequence de decollage
-	 */
-    	void 		drone_aqua_take_off(int *compteur);
-
-    	void 		calculation_error(const math::Quaternion &val_q);
-    	void 		discrete_derivative();
-    	void 		discrete_integrate();
 
 	/**
 	 * Shim for calling task_main from task_create.
