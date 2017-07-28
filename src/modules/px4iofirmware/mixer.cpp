@@ -449,13 +449,15 @@ mixer_callback(uintptr_t handle,
 		}
 	}
 
-	/* limit output */
+	
+	// limit output 
 	if (control > 1.0f) {
 		control = 1.0f;
 
 	} else if (control < -1.0f) {
 		control = -1.0f;
 	}
+	
 
 	/* motor spinup phase - lock throttle to zero */
 	if ((pwm_limit.state == PWM_LIMIT_STATE_RAMP) || (should_arm_nothrottle && !should_arm)) {

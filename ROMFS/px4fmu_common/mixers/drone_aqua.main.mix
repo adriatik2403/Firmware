@@ -61,8 +61,8 @@ Output 5
 mixer dans actuator_group_2 pour le servo du pivot. onajoute un offset pour le servo modif (-1700)
 
 M: 1
-O:      10000  10000      0 -20000  20000
-S: 2 1  10000  10000      0 -20000  20000
+O:      10000  10000      0 -10000  10000
+S: 2 1  10000  10000      0 -10000  10000
 
 Output 6
 -----------------

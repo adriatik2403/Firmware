@@ -250,3 +250,8 @@ unset FAILSAFE_AUX
 unset FAILSAFE
 unset OUTPUT_DEV
 unset OUTPUT_AUX_DEV
+
+# pwm sur le servo de pivot
+pwm min -c 6 -p 500
+
+pwm max -c 6 -p 2150

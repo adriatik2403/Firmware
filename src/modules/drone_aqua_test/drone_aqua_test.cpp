@@ -909,12 +909,12 @@ DroneAquaTest::task_main()
 	        //static int compteur = 0;
 
 	        static bool mode_seq0 = false;
-	        static bool mode_seq1 = false;
+	        //static bool mode_seq1 = false;
 	        static bool mode_seq2 = false;
-	        static bool mode_seq3 = false;
-	        static bool mode_seq4 = false;
-	        static bool mode_seq5 = false;       
-	        static bool mode_seq6 = false;
+	        //static bool mode_seq3 = false;
+	        //static bool mode_seq4 = false;
+	        //static bool mode_seq5 = false;       
+	        //static bool mode_seq6 = false;
 	        static bool mode_seq7 = false;
 	        static bool mode_seq8 = false;
 	        static bool mode_seq9 = false;
@@ -922,6 +922,7 @@ DroneAquaTest::task_main()
 	        static bool mode_seq11 = false;
 
 	        static bool flagidle = false;
+	        //static int test_time = 0;
 
 	        static int present_time = 0;
         
@@ -989,20 +990,21 @@ DroneAquaTest::task_main()
 		if(mode_seq0)
 	        {
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; 
-	                _actuators_airframe.control[2] = -1.0f;                             	
-	                _actuators_airframe.control[3] = -1.0f;
-	                _actuators_airframe.control[1] = 0.0f;
+	                //_actuators_airframe.control[2] = -1.0f;                             	
+	                //_actuators_airframe.control[3] = -1.0f;
+	                _actuators_airframe.control[1] = 0.28f;
 	     
 	                //if(hrt_absolute_time() - present_time >= 2000000)
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_01) // 2 sec	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq0 = false;
-	                   mode_seq1 = true;
+	                   mode_seq2 = true;
 	                   //flagidle = true;
 	                }
 	        }
 
+	        /*
 	        // COMMENCE À ACTIVER LE MUSCLE WIRE DU VERROU HORIZONTAL
 	        if(mode_seq1)
 	        {
@@ -1019,24 +1021,26 @@ DroneAquaTest::task_main()
 	                   mode_seq2 = true;             
 	                }               
 	        }
+	        */
 
 	        // ACTIVE LE SERVO POUR REMONTER LE PIVOT EN CONTINUANT DACTIVER LE MEME MUSCLE WIRE
 	        if(mode_seq2)
 	        {
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;  
-	                _actuators_airframe.control[2] = -1.0f;                                	
-	                _actuators_airframe.control[3] = 1.0f;
-	                _actuators_airframe.control[1] = -0.4f;
+	                //_actuators_airframe.control[2] = -1.0f;                                	
+	                //_actuators_airframe.control[3] = 1.0f;
+	                _actuators_airframe.control[1] = 1.0f;
 	               
 	                //if(hrt_absolute_time() - present_time >= 1000000)//(int)_parameters.take_off_custom_time_03) // 1 sec
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_03) // 1 sec	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq2 = false;
-	                   mode_seq3 = true;
+	                   mode_seq7 = true;
 	                }               
 	        }  
 
+	        /*
 	        // DÉSACTIVE LE MUSCLE WIRE ET FINI LA SEQUENCE POUR REMONTER LE PIVOT
 	        if(mode_seq3)
 	        {
@@ -1052,8 +1056,9 @@ DroneAquaTest::task_main()
 	                   mode_seq3 = false;
 	                   mode_seq4 = true;
 	                }                              
-	        }   
-
+	        }
+	        */   
+	        /*
 	        // DÉSACTIVE TOUT UNE FOIS LE PIVOT REMONTÉ
 	        if(mode_seq4)
 	        {
@@ -1070,7 +1075,9 @@ DroneAquaTest::task_main()
 	                   mode_seq5 = true;
 	                }                                     
 	        } 
+	        */
 
+	        /*
 	        // REMET LE SERVO DU PIVOT DANS SA POSITION INITIALE
 	        if(mode_seq5)
 	        {
@@ -1087,7 +1094,9 @@ DroneAquaTest::task_main()
 	                   mode_seq6 = true;
 	                }                                
 	        }   
+	        */
 
+	        /*
 	        // ARRETE LE SERVO DU PIVOT
 	        if(mode_seq6)
 	        {
@@ -1104,14 +1113,15 @@ DroneAquaTest::task_main()
 	                   mode_seq7 = true;
 	                }                                             
 	        }
+	        */
 
 		// IDLE DU THRUST A 20% PENDANT 2 SEC
 	        if(mode_seq7)
 	        {
-	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.20f;
-	                _actuators_airframe.control[2] = -1.0f; // muscle wire pos up pivot
-	                _actuators_airframe.control[3] = -1.0f; // muscle wire pos down pivot
-	                _actuators_airframe.control[1] = 0.0f;	// servo pivot
+	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.30f;
+	                //_actuators_airframe.control[2] = -1.0f; // muscle wire pos up pivot
+	                //_actuators_airframe.control[3] = -1.0f; // muscle wire pos down pivot
+	                _actuators_airframe.control[1] = 1.0f;	// servo pivot
 
 	                //if(hrt_absolute_time() - present_time >= 2000000)//(int)_parameters.take_off_custom_time_08) // 2 sec
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_08) // 2 sec	                	
@@ -1126,9 +1136,9 @@ DroneAquaTest::task_main()
 	        if(mode_seq8)
 	        {
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
-	                _actuators_airframe.control[2] = -1.0f;
-	                _actuators_airframe.control[3] = -1.0f;
-	                _actuators_airframe.control[1] = 0.0f;
+	                //_actuators_airframe.control[2] = -1.0f;
+	                //_actuators_airframe.control[3] = -1.0f;
+	                _actuators_airframe.control[1] = 1.0f;
 
 	                //if(hrt_absolute_time() - present_time >= 120000)//(int)_parameters.take_off_custom_time_09) // 120 ms
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_09) // 120 ms	                	
@@ -1143,9 +1153,9 @@ DroneAquaTest::task_main()
 	        if(mode_seq9)
 	        {
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
-	                _actuators_airframe.control[2] = 1.0f;
-	                _actuators_airframe.control[3] = -1.0f;
-	                _actuators_airframe.control[1] = 0.0f;
+	                //_actuators_airframe.control[2] = 1.0f;
+	                //_actuators_airframe.control[3] = -1.0f;
+	                _actuators_airframe.control[1] = 0.28f;
 
 	                //if(hrt_absolute_time() - present_time >= 35000)//(int)_parameters.take_off_custom_time_10) // 40 ms
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_10) // 40 ms	                	
@@ -1160,9 +1170,9 @@ DroneAquaTest::task_main()
 	        if(mode_seq10)
 	        {
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
-	                _actuators_airframe.control[2] = -1.0f;
-	                _actuators_airframe.control[3] = -1.0f;
-	                _actuators_airframe.control[1] = 0.0f;
+	                //_actuators_airframe.control[2] = -1.0f;
+	                //_actuators_airframe.control[3] = -1.0f;
+	                _actuators_airframe.control[1] = 0.28f;
 
 	                //if(hrt_absolute_time() - present_time >= 2000000)//(int)_parameters.take_off_custom_time_11) // 2 sec
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_11) // 2 sec	                	
@@ -1176,9 +1186,9 @@ DroneAquaTest::task_main()
             if(mode_seq11)
             {
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z; // pass-through de la commande du trigger
-                _actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f;
-                _actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
-                _actuators_airframe.control[INDEX_SERVO_ROT] = 0.0f;
+                //_actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f;
+                //_actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
+                _actuators_airframe.control[INDEX_SERVO_ROT] = 0.28f;
             }
 
             // COMMANDE DE ZÉRO SI VÉHICULE PAS ARMÉ
@@ -1191,30 +1201,31 @@ DroneAquaTest::task_main()
                 {
                	    flagidle = true;
                     present_time = hrt_absolute_time();
+                    //test_time = hrt_absolute_time();
                     mode_seq0 = true;
                 }
 
                 //////////////////////////////////////////////////////////////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////////////////////////////////
                 // TEST PWM < 1ms & > 2ms
-                _actuators_airframe.control[INDEX_SERVO_ROT] = _manual.y; 
+                //_actuators_airframe.control[INDEX_SERVO_ROT] = _manual.y; 
                 //////////////////////////////////////////////////////////////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////////////////////////////////
                 
 
 	    } else {
                 	_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; // quant nuttx boot le thrust est a 0
-                	_actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f; // quand nuttx boot on est certain quaucun muscle wire nest activé
-                	_actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f; // quand nuttx boot on est certain quaucun muscle wire nest activé
-                	_actuators_airframe.control[INDEX_SERVO_ROT] = 0.0f; // le servo ne bouge pas
+                	//_actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f; // quand nuttx boot on est certain quaucun muscle wire nest activé
+                	//_actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f; // quand nuttx boot on est certain quaucun muscle wire nest activé
+                	_actuators_airframe.control[INDEX_SERVO_ROT] = 0.28f; // le servo ne bouge pas
 
 		        mode_seq0 = false;
-		        mode_seq1 = false;
+		        //mode_seq1 = false;
 		        mode_seq2 = false;
-		        mode_seq3 = false;
-		        mode_seq4 = false;
-		        mode_seq5 = false;       
-		        mode_seq6 = false;
+		        //mode_seq3 = false;
+		        //mode_seq4 = false;
+		        //mode_seq5 = false;       
+		        //mode_seq6 = false;
 		        mode_seq7 = false;
 		        mode_seq8 = false;
 		        mode_seq9 = false;
@@ -1229,17 +1240,17 @@ DroneAquaTest::task_main()
             if(_manual.kill_switch == manual_control_setpoint_s::SWITCH_POS_ON) // si en mode manuel
             {
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
-                _actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f;
-                _actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
-                _actuators_airframe.control[INDEX_SERVO_ROT] = 0.0f; // le servo ne bouge pas
+                //_actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f;
+                //_actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
+                _actuators_airframe.control[INDEX_SERVO_ROT] = 0.28f; // le servo ne bouge pas
 
 		        mode_seq0 = false;
-		        mode_seq1 = false;
+		        //mode_seq1 = false;
 		        mode_seq2 = false;
-		        mode_seq3 = false;
-		        mode_seq4 = false;
-		        mode_seq5 = false;       
-		        mode_seq6 = false;
+		        //mode_seq3 = false;
+		        //mode_seq4 = false;
+		        //mode_seq5 = false;       
+		        //mode_seq6 = false;
 		        mode_seq7 = false;
 		        mode_seq8 = false;
 		        mode_seq9 = false;
