@@ -306,6 +306,7 @@ private:
 		float take_off_custom_time_09;
 		float take_off_custom_time_10;
 		float take_off_custom_time_11;
+		float take_off_horizontal_pos;
 
 	}		_parameters;			/**< local copies of interesting parameters */
 
@@ -367,6 +368,7 @@ private:
 		param_t take_off_custom_time_09;
 		param_t take_off_custom_time_10;
 		param_t take_off_custom_time_11;
+		param_t take_off_horizontal_pos;
 
 
 
@@ -598,6 +600,7 @@ DroneAquaTest::DroneAquaTest() :
 	_parameter_handles.take_off_custom_time_09 = param_find("TK_CUSTM_T9");
 	_parameter_handles.take_off_custom_time_10 = param_find("TK_CUSTM_T10");
 	_parameter_handles.take_off_custom_time_11 = param_find("TK_CUSTM_T11");
+	_parameter_handles.take_off_horizontal_pos = param_find("TK_HOR_POS");
 
 
 
@@ -748,6 +751,7 @@ DroneAquaTest::parameters_update()
 	param_get(_parameter_handles.take_off_custom_time_09, &_parameters.take_off_custom_time_09);
 	param_get(_parameter_handles.take_off_custom_time_10, &_parameters.take_off_custom_time_10);
 	param_get(_parameter_handles.take_off_custom_time_11, &_parameters.take_off_custom_time_11);
+	param_get(_parameter_handles.take_off_horizontal_pos, &_parameters.take_off_horizontal_pos);
 
 	return OK;
 }
@@ -992,7 +996,7 @@ DroneAquaTest::task_main()
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; 
 	                //_actuators_airframe.control[2] = -1.0f;                             	
 	                //_actuators_airframe.control[3] = -1.0f;
-	                _actuators_airframe.control[1] = 0.28f;
+	                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;
 	     
 	                //if(hrt_absolute_time() - present_time >= 2000000)
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_01) // 2 sec	                	
@@ -1155,7 +1159,7 @@ DroneAquaTest::task_main()
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
 	                //_actuators_airframe.control[2] = 1.0f;
 	                //_actuators_airframe.control[3] = -1.0f;
-	                _actuators_airframe.control[1] = 0.28f;
+	                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;
 
 	                //if(hrt_absolute_time() - present_time >= 35000)//(int)_parameters.take_off_custom_time_10) // 40 ms
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_10) // 40 ms	                	
@@ -1172,7 +1176,7 @@ DroneAquaTest::task_main()
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
 	                //_actuators_airframe.control[2] = -1.0f;
 	                //_actuators_airframe.control[3] = -1.0f;
-	                _actuators_airframe.control[1] = 0.28f;
+	                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;
 
 	                //if(hrt_absolute_time() - present_time >= 2000000)//(int)_parameters.take_off_custom_time_11) // 2 sec
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_11) // 2 sec	                	
@@ -1188,7 +1192,7 @@ DroneAquaTest::task_main()
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z; // pass-through de la commande du trigger
                 //_actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f;
                 //_actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
-                _actuators_airframe.control[INDEX_SERVO_ROT] = 0.28f;
+                _actuators_airframe.control[INDEX_SERVO_ROT] = _parameters.take_off_horizontal_pos; //0.28f;
             }
 
             // COMMANDE DE ZÉRO SI VÉHICULE PAS ARMÉ
@@ -1217,7 +1221,7 @@ DroneAquaTest::task_main()
                 	_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; // quant nuttx boot le thrust est a 0
                 	//_actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f; // quand nuttx boot on est certain quaucun muscle wire nest activé
                 	//_actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f; // quand nuttx boot on est certain quaucun muscle wire nest activé
-                	_actuators_airframe.control[INDEX_SERVO_ROT] = 0.28f; // le servo ne bouge pas
+                	_actuators_airframe.control[INDEX_SERVO_ROT] = _parameters.take_off_horizontal_pos; //0.28f; // le servo ne bouge pas
 
 		        mode_seq0 = false;
 		        //mode_seq1 = false;
@@ -1242,7 +1246,7 @@ DroneAquaTest::task_main()
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
                 //_actuators_airframe.control[INDEX_WIRE_POS_UP] = -1.0f;
                 //_actuators_airframe.control[INDEX_WIRE_POS_DOWN] = -1.0f;
-                _actuators_airframe.control[INDEX_SERVO_ROT] = 0.28f; // le servo ne bouge pas
+                _actuators_airframe.control[INDEX_SERVO_ROT] = _parameters.take_off_horizontal_pos; //0.28f; // le servo ne bouge pas
 
 		        mode_seq0 = false;
 		        //mode_seq1 = false;

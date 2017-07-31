@@ -47,6 +47,19 @@
  */
 
 /**
+ * Custom takeoff timing: timing 11
+ *
+ *
+ * @unit s
+ * @min -10.0
+ * @max 10.0
+ * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_HOR_POS, 0.28f);
+
+/**
  * Custom takeoff timing: timing 01
  *
  *
@@ -188,6 +201,7 @@ PARAM_DEFINE_FLOAT(TK_CUSTM_T10, 40000.0f);
  * @group FW Attitude Control
  */
 PARAM_DEFINE_FLOAT(TK_CUSTM_T11, 2000000.0f);
+
 
 
 
