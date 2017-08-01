@@ -39,6 +39,8 @@
  *
  */
 
+#include <drivers/drv_pwm_output.h>
+
 #include <px4_config.h>
 #include <px4_defines.h>
 #include <px4_tasks.h>
@@ -307,6 +309,8 @@ private:
 		float take_off_custom_time_10;
 		float take_off_custom_time_11;
 		float take_off_horizontal_pos;
+		float take_off_up_pos;
+		float take_off_down_pos;
 
 	}		_parameters;			/**< local copies of interesting parameters */
 
@@ -369,6 +373,8 @@ private:
 		param_t take_off_custom_time_10;
 		param_t take_off_custom_time_11;
 		param_t take_off_horizontal_pos;
+		param_t take_off_up_pos;
+		param_t take_off_down_pos;
 
 
 
@@ -601,6 +607,8 @@ DroneAquaTest::DroneAquaTest() :
 	_parameter_handles.take_off_custom_time_10 = param_find("TK_CUSTM_T10");
 	_parameter_handles.take_off_custom_time_11 = param_find("TK_CUSTM_T11");
 	_parameter_handles.take_off_horizontal_pos = param_find("TK_HOR_POS");
+	_parameter_handles.take_off_up_pos = param_find("TK_UP_POS");
+	_parameter_handles.take_off_down_pos = param_find("TK_DN_POS");
 
 
 
@@ -752,7 +760,8 @@ DroneAquaTest::parameters_update()
 	param_get(_parameter_handles.take_off_custom_time_10, &_parameters.take_off_custom_time_10);
 	param_get(_parameter_handles.take_off_custom_time_11, &_parameters.take_off_custom_time_11);
 	param_get(_parameter_handles.take_off_horizontal_pos, &_parameters.take_off_horizontal_pos);
-
+	param_get(_parameter_handles.take_off_up_pos, &_parameters.take_off_up_pos);
+	param_get(_parameter_handles.take_off_down_pos, &_parameters.take_off_down_pos);
 	return OK;
 }
 
@@ -858,7 +867,22 @@ DroneAquaTest::task_main_trampoline(int argc, char *argv[])
 }
 void
 DroneAquaTest::task_main()
-{
+{	
+
+	//////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////
+	// Setup PWM port params
+	/*
+	const char *dev = PWM_OUTPUT0_DEVICE_PATH;
+	int fd = px4_open(dev, 5);
+	if (fd<0)
+	{ 
+		PX4_ERR("bad pwm port"); 
+	}
+	*/
+	//////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////
+
 
 	_wake_up_slave_topic_2 = orb_advertise(ORB_ID(wake_up_slave_info_2), &report_wake_up_slave_2);
 	_charging_info_topic_2 = orb_advertise(ORB_ID(charging_info_2), &report_charging_2);
@@ -905,6 +929,7 @@ DroneAquaTest::task_main()
 	while (!_task_should_exit) {
 
         	static int loop_counter = 0;
+        	//static int time_count = 0;
 
 	        // VARIABLES UTILES À LA MANOEUVRE DE DÉCOLLAGE
 
@@ -980,6 +1005,7 @@ DroneAquaTest::task_main()
             vehicle_manual_poll();
             vehicle_control_mode_poll();
 
+
             //****************************************************************************************************//
             //A FARE -> METTRE CETTE SÉQUENCE DANS UNE FONCTION APPROPRIÉE ET RENOMMER LE MODULE "AQUA_TAKE_OFF"
             //****************************************************************************************************//    
@@ -997,6 +1023,17 @@ DroneAquaTest::task_main()
 	                //_actuators_airframe.control[2] = -1.0f;                             	
 	                //_actuators_airframe.control[3] = -1.0f;
 	                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;
+	                //_actuators_airframe.control[1] = -1.0f;
+
+	                //int mode_ret =  px4_ioctl(fd, PWM_SERVO_SET(0), set_pwm);
+ 			//int pitch_ret = px4_ioctl(fd, PWM_SERVO_SET(5), 500);
+
+	                /*
+	                if(pitch_ret)    
+	                {
+	                	
+	                }
+	                */	                
 	     
 	                //if(hrt_absolute_time() - present_time >= 2000000)
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_01) // 2 sec	                	
@@ -1033,15 +1070,28 @@ DroneAquaTest::task_main()
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;  
 	                //_actuators_airframe.control[2] = -1.0f;                                	
 	                //_actuators_airframe.control[3] = 1.0f;
-	                _actuators_airframe.control[1] = 1.0f;
+	                //_actuators_airframe.control[1] = 1.0f;
+	                _actuators_airframe.control[1] = _parameters.take_off_up_pos;
+
+	                //int mode_ret =  px4_ioctl(fd, PWM_SERVO_SET(modeslot), set_pwm);
+ 			//int pitch_ret = px4_ioctl(fd, PWM_SERVO_SET(5), 2150);
 	               
-	                //if(hrt_absolute_time() - present_time >= 1000000)//(int)_parameters.take_off_custom_time_03) // 1 sec
+	                //if(hrt_absolute_time() - present_time >= 2000000)//(int)_parameters.take_off_custom_time_03) // 1 sec
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_03) // 1 sec	                	
 	                {
 	                   present_time = hrt_absolute_time();
 	                   mode_seq2 = false;
 	                   mode_seq7 = true;
-	                }               
+	                   //mode_seq0 = true;
+	                }   
+
+	                /*
+	                if(pitch_ret)    
+	                {
+
+	                }   
+	                */
+	                    
 	        }  
 
 	        /*
@@ -1125,7 +1175,17 @@ DroneAquaTest::task_main()
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.30f;
 	                //_actuators_airframe.control[2] = -1.0f; // muscle wire pos up pivot
 	                //_actuators_airframe.control[3] = -1.0f; // muscle wire pos down pivot
-	                _actuators_airframe.control[1] = 1.0f;	// servo pivot
+	                //_actuators_airframe.control[1] = 1.0f;	// servo pivot
+
+	                //int mode_ret =  px4_ioctl(fd, PWM_SERVO_SET(modeslot), set_pwm);
+ 			//int pitch_ret = px4_ioctl(fd, PWM_SERVO_SET(5), 500);
+
+ 			/*
+	                if(pitch_ret)    
+	                {
+	                	
+	                }  
+	                */ 
 
 	                //if(hrt_absolute_time() - present_time >= 2000000)//(int)_parameters.take_off_custom_time_08) // 2 sec
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_08) // 2 sec	                	
@@ -1142,7 +1202,7 @@ DroneAquaTest::task_main()
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
 	                //_actuators_airframe.control[2] = -1.0f;
 	                //_actuators_airframe.control[3] = -1.0f;
-	                _actuators_airframe.control[1] = 1.0f;
+	                _actuators_airframe.control[1] = _parameters.take_off_up_pos;
 
 	                //if(hrt_absolute_time() - present_time >= 120000)//(int)_parameters.take_off_custom_time_09) // 120 ms
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_09) // 120 ms	                	
