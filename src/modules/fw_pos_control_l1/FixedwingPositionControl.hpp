@@ -307,16 +307,19 @@ private:
 
 		// timing parameter for takeoff custom
 		float take_off_custom_time_01;
-		float take_off_custom_time_02;
-		float take_off_custom_time_03;
-		float take_off_custom_time_04;
-		float take_off_custom_time_05;
-		float take_off_custom_time_06;
-		float take_off_custom_time_07;
+		//float take_off_custom_time_02;
+		//float take_off_custom_time_03;
+		//float take_off_custom_time_04;
+		//float take_off_custom_time_05;
+		//float take_off_custom_time_06;
+		//float take_off_custom_time_07;
 		float take_off_custom_time_08;
 		float take_off_custom_time_09;
-		float take_off_custom_time_10;
+		//float take_off_custom_time_10;
 		float take_off_custom_time_11;
+		float take_off_horizontal_pos;
+		float take_off_up_pos;
+		float take_off_down_pos;
 
 		float take_off_custom_pitch;
 
@@ -381,16 +384,20 @@ private:
 
 		// timing parameter for takeoff custom
 		param_t take_off_custom_time_01;
-		param_t take_off_custom_time_02;
-		param_t take_off_custom_time_03;
-		param_t take_off_custom_time_04;
-		param_t take_off_custom_time_05;
-		param_t take_off_custom_time_06;
-		param_t take_off_custom_time_07;
+		//param_t take_off_custom_time_02;
+		//param_t take_off_custom_time_03;
+		//param_t take_off_custom_time_04;
+		//param_t take_off_custom_time_05;
+		//param_t take_off_custom_time_06;
+		//param_t take_off_custom_time_07;
 		param_t take_off_custom_time_08;
 		param_t take_off_custom_time_09;
-		param_t take_off_custom_time_10;
+		//param_t take_off_custom_time_10;
 		param_t take_off_custom_time_11;
+		param_t take_off_horizontal_pos;
+		param_t take_off_up_pos;
+		param_t take_off_down_pos;
+
 		param_t take_off_custom_pitch;
 
 	} _parameter_handles {};				///< handles for interesting parameters */

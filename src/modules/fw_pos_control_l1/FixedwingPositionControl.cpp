@@ -75,17 +75,20 @@ FixedwingPositionControl::FixedwingPositionControl() :
 	_parameter_handles.land_airspeed_scale = param_find("FW_LND_AIRSPD_SC");
 
 	// timing for each step of aqua drone take off
-	_parameter_handles.take_off_custom_time_01 = param_find("TK_CUSTM_T1");
-	_parameter_handles.take_off_custom_time_02 = param_find("TK_CUSTM_T2");
-	_parameter_handles.take_off_custom_time_03 = param_find("TK_CUSTM_T3");
-	_parameter_handles.take_off_custom_time_04 = param_find("TK_CUSTM_T4");
-	_parameter_handles.take_off_custom_time_05 = param_find("TK_CUSTM_T5");
-	_parameter_handles.take_off_custom_time_06 = param_find("TK_CUSTM_T6");
-	_parameter_handles.take_off_custom_time_07 = param_find("TK_CUSTM_T7");
-	_parameter_handles.take_off_custom_time_08 = param_find("TK_CUSTM_T8");
-	_parameter_handles.take_off_custom_time_09 = param_find("TK_CUSTM_T9");
-	_parameter_handles.take_off_custom_time_10 = param_find("TK_CUSTM_T10");
-	_parameter_handles.take_off_custom_time_11 = param_find("TK_CUSTM_T11");
+	_parameter_handles.take_off_custom_time_01 = param_find("TK_WAIT_TIME");
+	//_parameter_handles.take_off_custom_time_02 = param_find("TK_CUSTM_T2");
+	//_parameter_handles.take_off_custom_time_03 = param_find("TK_UP_TIME");
+	//_parameter_handles.take_off_custom_time_04 = param_find("TK_CUSTM_T4");
+	//_parameter_handles.take_off_custom_time_05 = param_find("TK_CUSTM_T5");
+	//_parameter_handles.take_off_custom_time_06 = param_find("TK_CUSTM_T6");
+	//_parameter_handles.take_off_custom_time_07 = param_find("TK_CUSTM_T7");
+	_parameter_handles.take_off_custom_time_08 = param_find("TK_IDLE_UP_TIME");
+	_parameter_handles.take_off_custom_time_09 = param_find("TK_FULL_UP_TIME");
+	//_parameter_handles.take_off_custom_time_10 = param_find("TK_FULL_DN_TIME");
+	_parameter_handles.take_off_custom_time_11 = param_find("TK_FULL_DN_TIME");
+	_parameter_handles.take_off_horizontal_pos = param_find("TK_HOR_POS");
+	_parameter_handles.take_off_up_pos = param_find("TK_UP_POS");
+	_parameter_handles.take_off_down_pos = param_find("TK_DN_POS");
 
 	_parameter_handles.take_off_custom_pitch = param_find("TK_CUSTM_PITCH");
 
@@ -198,16 +201,20 @@ FixedwingPositionControl::parameters_update()
 
 	// timing for each step of aqua drone take off
 	param_get(_parameter_handles.take_off_custom_time_01, &_parameters.take_off_custom_time_01);
-	param_get(_parameter_handles.take_off_custom_time_02, &_parameters.take_off_custom_time_02);
-	param_get(_parameter_handles.take_off_custom_time_03, &_parameters.take_off_custom_time_03);
-	param_get(_parameter_handles.take_off_custom_time_04, &_parameters.take_off_custom_time_04);
-	param_get(_parameter_handles.take_off_custom_time_05, &_parameters.take_off_custom_time_05);
-	param_get(_parameter_handles.take_off_custom_time_06, &_parameters.take_off_custom_time_06);
-	param_get(_parameter_handles.take_off_custom_time_07, &_parameters.take_off_custom_time_07);
+	//param_get(_parameter_handles.take_off_custom_time_02, &_parameters.take_off_custom_time_02);
+	//param_get(_parameter_handles.take_off_custom_time_03, &_parameters.take_off_custom_time_03);
+	//param_get(_parameter_handles.take_off_custom_time_04, &_parameters.take_off_custom_time_04);
+	//param_get(_parameter_handles.take_off_custom_time_05, &_parameters.take_off_custom_time_05);
+	//param_get(_parameter_handles.take_off_custom_time_06, &_parameters.take_off_custom_time_06);
+	//param_get(_parameter_handles.take_off_custom_time_07, &_parameters.take_off_custom_time_07);
 	param_get(_parameter_handles.take_off_custom_time_08, &_parameters.take_off_custom_time_08);
 	param_get(_parameter_handles.take_off_custom_time_09, &_parameters.take_off_custom_time_09);
-	param_get(_parameter_handles.take_off_custom_time_10, &_parameters.take_off_custom_time_10);
+	//param_get(_parameter_handles.take_off_custom_time_10, &_parameters.take_off_custom_time_10);
 	param_get(_parameter_handles.take_off_custom_time_11, &_parameters.take_off_custom_time_11);
+	param_get(_parameter_handles.take_off_horizontal_pos, &_parameters.take_off_horizontal_pos);
+	param_get(_parameter_handles.take_off_up_pos, &_parameters.take_off_up_pos);
+	param_get(_parameter_handles.take_off_down_pos, &_parameters.take_off_down_pos);
+	
 	param_get(_parameter_handles.take_off_custom_pitch, &_parameters.take_off_custom_pitch);
 
 	/* check if negative value for 2/3 of flare altitude is set for throttle cut */
@@ -1674,10 +1681,8 @@ FixedwingPositionControl::task_main()
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// update time the custom take off take to be executed
-	total_time_takeoff = _parameters.take_off_custom_time_01 + _parameters.take_off_custom_time_02 + _parameters.take_off_custom_time_03
-		+ _parameters.take_off_custom_time_04 + _parameters.take_off_custom_time_05 + _parameters.take_off_custom_time_06
-		+ _parameters.take_off_custom_time_07 + _parameters.take_off_custom_time_08 + _parameters.take_off_custom_time_09
-		+ _parameters.take_off_custom_time_10 + _parameters.take_off_custom_time_11;
+	total_time_takeoff = _parameters.take_off_custom_time_01 + _parameters.take_off_custom_time_08 + _parameters.take_off_custom_time_09
+		+ _parameters.take_off_custom_time_11 + 1000000.0f + 55000.0f;
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1725,10 +1730,8 @@ FixedwingPositionControl::task_main()
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// update time the custom take off take to be executed
-			total_time_takeoff = _parameters.take_off_custom_time_01 + _parameters.take_off_custom_time_02 + _parameters.take_off_custom_time_03
-				+ _parameters.take_off_custom_time_04 + _parameters.take_off_custom_time_05 + _parameters.take_off_custom_time_06
-				+ _parameters.take_off_custom_time_07 + _parameters.take_off_custom_time_08 + _parameters.take_off_custom_time_09
-				+ _parameters.take_off_custom_time_10 + _parameters.take_off_custom_time_11;
+			total_time_takeoff = _parameters.take_off_custom_time_01 + _parameters.take_off_custom_time_08 + _parameters.take_off_custom_time_09
+				+ _parameters.take_off_custom_time_11 + 1000000.0f + 55000.0f;
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		}
