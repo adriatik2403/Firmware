@@ -1226,7 +1226,7 @@ FixedwingAttitudeControl::task_main()
 						// il ny a pas de decollage custom -> on reset les parametres
 						if(!_att_sp.decollage_custom && mode_custom == false)
 						{
-                					_actuators_airframe.control[1] = 0.0f;
+                					_actuators_airframe.control[1] = _parameters.take_off_horizontal_pos;
 
 							present_time = hrt_absolute_time();
 
@@ -1348,6 +1348,8 @@ FixedwingAttitudeControl::task_main()
 									throttle_sp : 0.0f;
 							/////////////////////////////////////////////////////////////////////////////////////////
 
+							
+
 													// scale effort by battery status
 							if (_parameters.bat_scale_en && _battery_status.scale > 0.0f &&
 							    _actuators.control[actuator_controls_s::INDEX_THROTTLE] > 0.1f) {
@@ -1397,6 +1399,8 @@ FixedwingAttitudeControl::task_main()
 							//!(_vehicle_status.engine_failure ||
 							!_vehicle_status.engine_failure_cmd) ?
 							throttle_sp : 0.0f;
+
+					_actuators_airframe.control[1] = _parameters.take_off_horizontal_pos;
 				}
 
 				/*
@@ -1425,13 +1429,14 @@ FixedwingAttitudeControl::task_main()
 						_parameters.trim_pitch;
 				_actuators.control[actuator_controls_s::INDEX_YAW] = _manual.r * _parameters.man_yaw_scale + _parameters.trim_yaw;
 				_actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z;
+				_actuators_airframe.control[1] = _parameters.take_off_horizontal_pos;
 			}
 
 			
 			// si on switch en mode manual ou stabilized, on reset la sequence de decollage custom
 			if(!_vcontrol_mode.flag_control_attitude_enabled || !_vcontrol_mode.flag_control_rates_enabled)
 			{
-				_actuators_airframe.control[1] = 0.0f;
+				_actuators_airframe.control[1] = _parameters.take_off_horizontal_pos;
 
 				present_time = hrt_absolute_time();
 
@@ -1451,11 +1456,13 @@ FixedwingAttitudeControl::task_main()
 			_actuators.control[actuator_controls_s::INDEX_YAW] += _parameters.roll_to_yaw_ff * math::constrain(
 						_actuators.control[actuator_controls_s::INDEX_ROLL], -1.0f, 1.0f);
 
-			_actuators.control[actuator_controls_s::INDEX_FLAPS] = _flaps_applied;
-			_actuators.control[5] = _manual.aux1;
-			_actuators.control[actuator_controls_s::INDEX_AIRBRAKES] = _flaperons_applied;
+			// NOTE: ATTENTION ON A ENLEVER QUELQUES TRUCS ...
+
+			//_actuators.control[actuator_controls_s::INDEX_FLAPS] = _flaps_applied;
+			//_actuators.control[5] = _manual.aux1;
+			//_actuators.control[actuator_controls_s::INDEX_AIRBRAKES] = _flaperons_applied;
 			// FIXME: this should use _vcontrol_mode.landing_gear_pos in the future
-			_actuators.control[7] = _manual.aux3;
+			//_actuators.control[7] = _manual.aux3;
 
 			/* lazily publish the setpoint only once available */
 			_actuators.timestamp = hrt_absolute_time();
