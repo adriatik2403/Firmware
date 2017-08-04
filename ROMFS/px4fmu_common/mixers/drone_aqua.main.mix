@@ -62,7 +62,7 @@ mixer dans actuator_group_2 pour le servo du pivot. onajoute un offset pour le s
 
 M: 1
 O:      10000  10000      0 -10000  10000
-S: 2 1  10000  10000      -1700 -10000  10000
+S: 2 1  10000  10000      0 -10000  10000
 
 Output 6
 -----------------
