@@ -21,6 +21,7 @@ bool disable_mc_yaw_control			# control yaw for mc (used for vtol weather-vane m
 bool apply_flaps
 
 bool decollage_custom				# indique au attitude controller d'executer la manouevre de decollage custom
+bool atterrissage_custom				# indique au attitude controller d'executer la manouevre de decollage custom
 
 float32 landing_gear
 

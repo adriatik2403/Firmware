@@ -643,10 +643,20 @@ bool
 FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, const math::Vector<2> &ground_speed,
 		const position_setpoint_s &pos_sp_prev, const position_setpoint_s &pos_sp_curr)
 {
+	// variables pour le mode custom de take off
 	static int time_begin_take_off = 0;
 	static bool flag_message_takeoff_normal = false;
 	static bool flag_message_takeoff_custom = false;
-	static int test = 3;
+
+	// variables pour le mode custom de landing
+	static bool test_landing = true;
+	static bool mode_landing_01 = false; // pitch up
+	static bool mode_landing_02 = false; // pitch down
+	static bool mode_landing_03 = false; // pitch horizontal
+	static int time_begin_landing = 0;
+	static int landing_altitude = 0;
+	static bool flag_landing = false;
+
 
 	float dt = 0.01f;
 
@@ -729,6 +739,9 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 		_tecs.reset_state();
 	}
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	if (_control_mode.flag_control_auto_enabled && pos_sp_curr.valid) {
 		/* AUTONOMOUS FLIGHT */
 
@@ -843,7 +856,73 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 						   false,
 						   radians(_parameters.pitch_limit_min));
 
+		/////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////	
 		} else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_LAND) {
+
+			//mavlink_log_info(&_mavlink_log_pub, "LAND");
+
+			if(flag_landing == true)
+			{
+				landing_altitude = _global_pos.alt;
+				flag_landing = false;
+			}
+
+			if(test_landing)
+			{		
+				// PITCH UP								
+				if(mode_landing_01)
+			        {
+			        	//mavlink_log_info(&_mavlink_log_pub, "landing 01");
+			        	_att_sp.yaw_body = 0.0f;
+					_att_sp.roll_body = 0.0f;
+					_att_sp.pitch_body = 1.4f; // A METTRE EN PARAMETRES 
+              			     
+			                if(hrt_absolute_time() - time_begin_landing >= 1000000) // A METTRE EN PARAMETRES 		                	                	
+			                {
+			                   time_begin_landing = hrt_absolute_time();
+			                   mode_landing_01 = false;
+			                   mode_landing_02 = true;
+			                }
+			        // PITCH DOWN
+			        }
+			        if(mode_landing_02)
+			        {
+			        	//mavlink_log_info(&_mavlink_log_pub, "landing 02");
+			        	_att_sp.yaw_body = 0.0f;
+					_att_sp.roll_body = 0.0f;
+					_att_sp.pitch_body = -1.4f; // A METTRE EN PARAMETRES   
+
+					//mavlink_log_info(&_mavlink_log_pub, "%i global alt", (int)_global_pos.alt);   
+					//mavlink_log_info(&_mavlink_log_pub, "%i takeoff alt", (int)landing_altitude); 
+					//mavlink_log_info(&_mavlink_log_pub, "%i terrain alt", (int)_global_pos.alt); 
+			     
+			                if(((int)landing_altitude -(int)_global_pos.alt) > (50 - 15)) // altitude plus petite que 15 metres // A METTRE EN PARAMETRES 			                	                	
+			                {
+			                   //time_begin_landing = hrt_absolute_time();
+			                   mode_landing_02 = false;
+			                   mode_landing_03 = true;
+			                }
+			        }
+			        // PITCH HORIZONTAL
+			        if(mode_landing_03)
+			        {
+			        	//mavlink_log_info(&_mavlink_log_pub, "landing 03");
+			        	_att_sp.yaw_body = 0.0f;
+					_att_sp.roll_body = 0.0f;
+					_att_sp.pitch_body = 0.0f; // A METTRE EN PARAMETRES 	 				            			  
+			        }
+			}
+			else
+			{	
+
+
+			}
+
+
+			#if 0
+
+
 
 			// apply full flaps for landings. this flag will also trigger the use of flaperons
 			// if they have been enabled using the corresponding parameter
@@ -1079,7 +1158,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 						altitude_desired_rel = L_altitude_rel;
 
 					} else {
-						altitude_desired_rel = _global_pos.alt - terrain_alt;;
+						altitude_desired_rel = _global_pos.alt - terrain_alt;
 					}
 				}
 
@@ -1093,9 +1172,10 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 							   false,
 							   radians(_parameters.pitch_limit_min));
 			}
-			
 
-
+			#endif
+		/////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////
 		} else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF) {
 
 			// continuously reset launch detection and runway takeoff until armed
@@ -1113,43 +1193,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 
 				flag_message_takeoff_normal = false;
 				flag_message_takeoff_custom = false;
-			}
-
-			// test ajout d'un timer avant le décollage ...
-			/////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////		
-			/*
-			if(_control_mode.flag_armed && Custom_Takeoff_Drone_Aqua) 
-			{
-				if(!flagtest)
-				{
-					mavlink_log_critical(&_mavlink_log_pub, "Début du take off custom");
-					flagtest = 1;
-				}
-
-				_runway_takeoff.reset();
-				_launchDetector.reset();
-				_launch_detection_state = LAUNCHDETECTION_RES_NONE;
-				_launch_detection_notify = 0;
-
-				// test envoie dun flag au attitude controller...
-				_att_sp.decollage_custom = true;
-
-				comp++;
-
-				// test stanby de 5 secondes avant le décollage après avoir armé lavion
-				if(comp >= 500)
-				{
-					flagtest = 0;
-					comp = 0;
-					_att_sp.decollage_custom = false;
-					Custom_Takeoff_Drone_Aqua = 0;
-					mavlink_log_critical(&_mavlink_log_pub, "Fin du take off custom");
-				}
-			}
-			*/
-			/////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////				
+			}				
 
 			if (_runway_takeoff.runwayTakeoffEnabled()) {
 				if (!_runway_takeoff.isInitialized() ){//&& Custom_Takeoff_Drone_Aqua && !_control_mode.flag_armed) {
@@ -1220,7 +1264,8 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 
 					_att_sp.roll_body = 0.0f;
 					_att_sp.yaw_body = 0.0f;
-					_att_sp.fw_control_yaw = 0.0f;
+					//_att_sp.fw_control_yaw = 0.0f;
+					_att_sp.yaw_body = 0.0f;
 					_att_sp.pitch_body = _parameters.take_off_custom_pitch;
 
 					_att_sp.decollage_custom = true;
@@ -1324,6 +1369,8 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 				}
 			}
 		}
+		/////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////
 
 		/* reset landing state */
 		if (pos_sp_curr.type != position_setpoint_s::SETPOINT_TYPE_LAND) {
@@ -1339,6 +1386,9 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 			/* just kicked out of loiter, reset roll integrals */
 			_att_sp.roll_reset_integral = true;
 		}
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	} else if (_control_mode.flag_control_velocity_enabled &&
 		   _control_mode.flag_control_altitude_enabled) {
@@ -1515,11 +1565,27 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	if(!_control_mode.flag_control_auto_enabled)
 	{
+		// param pour take off
 		time_begin_take_off = hrt_absolute_time();
+
 		_att_sp.decollage_custom = false;
 
 		flag_message_takeoff_normal = false;
 		flag_message_takeoff_custom = false;
+
+		// param pour landing
+		time_begin_landing = hrt_absolute_time();
+		mode_landing_01 = true;
+		mode_landing_03 = false;
+	}
+
+	if(pos_sp_curr.type != position_setpoint_s::SETPOINT_TYPE_LAND)
+	{
+		// param pour landing
+		time_begin_landing = hrt_absolute_time();
+		mode_landing_01 = true;
+		mode_landing_03 = false;
+		flag_landing = true;
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1566,6 +1632,14 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 	} else if (_control_mode_current == FW_POSCTRL_MODE_OTHER) {
 		_att_sp.thrust = min(_att_sp.thrust, _parameters.throttle_max);
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	} else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_LAND) {
+
+		// si on land on coupe le moteur -> lorsque lon atteint le waypoint avant le point land
+		_att_sp.thrust = 0.0f;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	} else {
 		/* Copy thrust and pitch values from tecs */
 		if (_vehicle_land_detected.landed) {
@@ -1592,8 +1666,16 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 	// manual attitude control
 	use_tecs_pitch &= !(_control_mode_current == FW_POSCTRL_MODE_OTHER);
 
-	if (use_tecs_pitch) {
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	if (use_tecs_pitch && pos_sp_curr.type != position_setpoint_s::SETPOINT_TYPE_LAND && _att_sp.decollage_custom == false) {
 		_att_sp.pitch_body = get_tecs_pitch();
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_LAND) {
+
 	}
 
 	if (_control_mode.flag_control_position_enabled) {

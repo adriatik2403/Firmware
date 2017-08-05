@@ -643,7 +643,6 @@ FixedwingAttitudeControl::parameters_update()
 	param_get(_parameter_handles.take_off_horizontal_pos, &_parameters.take_off_horizontal_pos);
 	param_get(_parameter_handles.take_off_up_pos, &_parameters.take_off_up_pos);
 	param_get(_parameter_handles.take_off_down_pos, &_parameters.take_off_down_pos);
-
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
 	_pitch_ctrl.set_k_p(_parameters.p_p);
@@ -836,7 +835,7 @@ FixedwingAttitudeControl::task_main()
         static bool mode_seq9 = false;
         static bool mode_seq10 = false;
 
-        static bool mode_custom = false;
+        static bool mode_take_off_custom = false;
 
 	static int present_time = hrt_absolute_time(); // timer pour les etapes du decollage
 	//////////////////////////////////////////////////////////////////////////////
@@ -1224,7 +1223,7 @@ FixedwingAttitudeControl::task_main()
 						///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 						///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 						// il ny a pas de decollage custom -> on reset les parametres
-						if(!_att_sp.decollage_custom && mode_custom == false)
+						if(!_att_sp.decollage_custom && mode_take_off_custom == false)
 						{
                 					_actuators_airframe.control[1] = _parameters.take_off_horizontal_pos;
 
@@ -1238,9 +1237,9 @@ FixedwingAttitudeControl::task_main()
 							mode_seq10 = false;
 
 						}
-						else if(_att_sp.decollage_custom && mode_custom == false) // il y a un decolage custom -> on active le flag qui permet d'effectuer la séquence
+						else if(_att_sp.decollage_custom && mode_take_off_custom == false) // il y a un decolage custom -> on active le flag qui permet d'effectuer la séquence
 						{
-							mode_custom = true;
+							mode_take_off_custom = true;
 							mode_seq0 = true;
 						}
 						else
@@ -1248,7 +1247,7 @@ FixedwingAttitudeControl::task_main()
 
 						}
 
-						if(mode_custom == true)
+						if(mode_take_off_custom == true)
 						{
 
 							// WAIT AVANT LA SEQUENCE (FALCULTATIF)
@@ -1331,7 +1330,7 @@ FixedwingAttitudeControl::task_main()
 						                {
 						                   present_time = hrt_absolute_time();
 						                   mode_seq10 = false;
-						                   mode_custom = false;
+						                   mode_take_off_custom = false;
 						                  
 						                }                
 						        }
@@ -1447,7 +1446,7 @@ FixedwingAttitudeControl::task_main()
 			        mode_seq9 = false;
 			        mode_seq10 = false;
 
-			        mode_custom = false;
+			        mode_take_off_custom = false;
 			}
 			
 
