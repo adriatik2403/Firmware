@@ -320,8 +320,13 @@ private:
 		float take_off_horizontal_pos;
 		float take_off_up_pos;
 		float take_off_down_pos;
-
 		float take_off_custom_pitch;
+
+		float landing_pitch_up_angle;
+		float landing_pitch_dn_angle;
+		float landing_pitch_hor_angle;
+		float landing_pitch_up_time;
+		float landing_pitch_dn_altitude;
 
 	} _parameters{};					///< local copies of interesting parameters */
 
@@ -397,8 +402,13 @@ private:
 		param_t take_off_horizontal_pos;
 		param_t take_off_up_pos;
 		param_t take_off_down_pos;
-
 		param_t take_off_custom_pitch;
+
+		param_t landing_pitch_up_angle;
+		param_t landing_pitch_dn_angle;
+		param_t landing_pitch_hor_angle;
+		param_t landing_pitch_up_time;
+		param_t landing_pitch_dn_altitude;
 
 	} _parameter_handles {};				///< handles for interesting parameters */
 

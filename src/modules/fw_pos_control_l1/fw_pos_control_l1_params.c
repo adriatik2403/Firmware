@@ -44,6 +44,61 @@
  */
 
 /**
+ *
+ * @unit m
+ * @min 0
+ * @max 1.5
+ * @decimal 2
+ * @increment 0.01
+ * @group FW L1 Control
+ */
+PARAM_DEFINE_FLOAT(LD_PITCH_UP_ANG, 1.4f);
+
+/**
+ *
+ * @unit m
+ * @min -1.5
+ * @max 0.0
+ * @decimal 2
+ * @increment 0.01
+ * @group FW L1 Control
+ */
+PARAM_DEFINE_FLOAT(LD_PITCH_DN_ANG, -1.4f);
+
+/**
+ *
+ * @unit m
+ * @min -1.5
+ * @max 1.5
+ * @decimal 2
+ * @increment 0.01
+ * @group FW L1 Control
+ */
+PARAM_DEFINE_FLOAT(LD_PITCH_HOR_ANG, 0.3f);
+
+/**
+ *
+ * @unit m
+ * @min 0
+ * @max 5000000.0
+ * @decimal 2
+ * @increment 0.01
+ * @group FW L1 Control
+ */
+PARAM_DEFINE_FLOAT(LD_PITCH_UP_TIME, 2000000.0f);
+
+/**
+ *
+ * @unit m
+ * @min 0
+ * @max 50.0
+ * @decimal 2
+ * @increment 0.01
+ * @group FW L1 Control
+ */
+PARAM_DEFINE_FLOAT(LD_PITCH_DN_ALT, 20.0f);
+
+/**
  * L1 period
  *
  * This is the L1 distance and defines the tracking

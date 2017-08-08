@@ -64,6 +64,10 @@
 #include <drivers/drv_hrt.h>
 #include <controllib/blocks.hpp>
 
+#include <systemlib/mavlink_log.h>
+#include <uORB/uORB.h>
+#include <systemlib/perf_counter.h>
+
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/airspeed.h>
@@ -127,6 +131,8 @@ public:
 	void exit() { _task_should_exit = true; }
 
 private:
+	orb_advert_t	_mavlink_log_pub{nullptr};
+
 	static constexpr float _dt_max = 0.02;
 	bool	_task_should_exit = false;
 	int	_control_task = -1;		// task handle for task
@@ -321,6 +327,8 @@ private:
 	_mag_bias_saved_variance; // Assumed error variance of previously saved magnetometer bias estimates (mGauss**2)
 	control::BlockParamFloat _mag_bias_alpha; // maximum fraction of the learned bias that is applied each disarm
 
+	control::BlockParamInt _kill_baro;
+
 	int update_subscriptions();
 
 };
@@ -429,7 +437,8 @@ Ekf2::Ekf2():
 	_mag_bias_z(this, "EKF2_MAGBIAS_Z", false),
 	_mag_bias_id(this, "EKF2_MAGBIAS_ID", false),
 	_mag_bias_saved_variance(this, "EKF2_MAGB_VREF", false),
-	_mag_bias_alpha(this, "EKF2_MAGB_K", false)
+	_mag_bias_alpha(this, "EKF2_MAGB_K", false),
+	_kill_baro(this, "KILL_BARO", false)
 
 {
 
@@ -686,7 +695,13 @@ void Ekf2::task_main()
 				// le choix de sourcce de hauteur entre le gps et le barometre, la donnée vient du gps
 				if (balt_time_ms - _balt_time_ms_last_used > (uint32_t)_params->sensor_interval_min_ms) {
 					float balt_data_avg = _balt_data_sum / (float)_balt_sample_count;
-					//balt_data_avg = gps.alt  * 1e-3f; // PATCH: on prend le gps comme source pour le baro...
+
+					if(_kill_baro.get() == 1)
+					{
+						//mavlink_log_info(&_mavlink_log_pub, "kill_baro");
+						balt_data_avg = gps.alt  * 1e-3f; // PATCH: on prend le gps comme source pour le baro...
+					}
+
 					_ekf.setBaroData(1000 * (uint64_t)balt_time_ms, balt_data_avg);
 					_balt_time_ms_last_used = balt_time_ms;
 					_balt_time_sum_ms = 0;

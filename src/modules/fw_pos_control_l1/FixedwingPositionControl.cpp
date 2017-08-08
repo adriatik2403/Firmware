@@ -89,8 +89,13 @@ FixedwingPositionControl::FixedwingPositionControl() :
 	_parameter_handles.take_off_horizontal_pos = param_find("TK_HOR_POS");
 	_parameter_handles.take_off_up_pos = param_find("TK_UP_POS");
 	_parameter_handles.take_off_down_pos = param_find("TK_DN_POS");
-
 	_parameter_handles.take_off_custom_pitch = param_find("TK_CUSTM_PITCH");
+
+	_parameter_handles.landing_pitch_up_angle = param_find("LD_PITCH_UP_ANG");
+	_parameter_handles.landing_pitch_dn_angle = param_find("LD_PITCH_DN_ANG");
+	_parameter_handles.landing_pitch_hor_angle = param_find("LD_PITCH_HOR_ANG");
+	_parameter_handles.landing_pitch_up_time = param_find("LD_PITCH_UP_TIME");
+	_parameter_handles.landing_pitch_dn_altitude = param_find("LD_PITCH_DN_ALT");
 
 	_parameter_handles.time_const = 			param_find("FW_T_TIME_CONST");
 	_parameter_handles.time_const_throt = 			param_find("FW_T_THRO_CONST");
@@ -214,8 +219,13 @@ FixedwingPositionControl::parameters_update()
 	param_get(_parameter_handles.take_off_horizontal_pos, &_parameters.take_off_horizontal_pos);
 	param_get(_parameter_handles.take_off_up_pos, &_parameters.take_off_up_pos);
 	param_get(_parameter_handles.take_off_down_pos, &_parameters.take_off_down_pos);
-	
 	param_get(_parameter_handles.take_off_custom_pitch, &_parameters.take_off_custom_pitch);
+
+	param_get(_parameter_handles.landing_pitch_up_angle, &_parameters.landing_pitch_up_angle);
+	param_get(_parameter_handles.landing_pitch_dn_angle, &_parameters.landing_pitch_dn_angle);
+	param_get(_parameter_handles.landing_pitch_hor_angle, &_parameters.landing_pitch_hor_angle);
+	param_get(_parameter_handles.landing_pitch_up_time, &_parameters.landing_pitch_up_time);
+	param_get(_parameter_handles.landing_pitch_dn_altitude, &_parameters.landing_pitch_dn_altitude);
 
 	/* check if negative value for 2/3 of flare altitude is set for throttle cut */
 	if (_parameters.land_thrust_lim_alt_relative < 0.0f) {
@@ -653,8 +663,8 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 	static bool mode_landing_01 = false; // pitch up
 	static bool mode_landing_02 = false; // pitch down
 	static bool mode_landing_03 = false; // pitch horizontal
-	static int time_begin_landing = 0;
-	static int landing_altitude = 0;
+	static float time_begin_landing = 0;
+	static float landing_altitude = 0;
 	static bool flag_landing = false;
 
 
@@ -876,9 +886,9 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 			        	//mavlink_log_info(&_mavlink_log_pub, "landing 01");
 			        	_att_sp.yaw_body = 0.0f;
 					_att_sp.roll_body = 0.0f;
-					_att_sp.pitch_body = 1.4f; // A METTRE EN PARAMETRES 
+					_att_sp.pitch_body = _parameters.landing_pitch_up_angle; // A METTRE EN PARAMETRES 
               			     
-			                if(hrt_absolute_time() - time_begin_landing >= 1000000) // A METTRE EN PARAMETRES 		                	                	
+			                if((hrt_absolute_time() - time_begin_landing) >= _parameters.landing_pitch_up_time) // A METTRE EN PARAMETRES 		                	                	
 			                {
 			                   time_begin_landing = hrt_absolute_time();
 			                   mode_landing_01 = false;
@@ -891,13 +901,13 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 			        	//mavlink_log_info(&_mavlink_log_pub, "landing 02");
 			        	_att_sp.yaw_body = 0.0f;
 					_att_sp.roll_body = 0.0f;
-					_att_sp.pitch_body = -1.4f; // A METTRE EN PARAMETRES   
+					_att_sp.pitch_body = _parameters.landing_pitch_dn_angle; // A METTRE EN PARAMETRES   
 
 					//mavlink_log_info(&_mavlink_log_pub, "%i global alt", (int)_global_pos.alt);   
 					//mavlink_log_info(&_mavlink_log_pub, "%i takeoff alt", (int)landing_altitude); 
 					//mavlink_log_info(&_mavlink_log_pub, "%i terrain alt", (int)_global_pos.alt); 
 			     
-			                if(((int)landing_altitude -(int)_global_pos.alt) > (50 - 15)) // altitude plus petite que 15 metres // A METTRE EN PARAMETRES 			                	                	
+			                if((landing_altitude - _global_pos.alt) > _parameters.landing_pitch_dn_altitude) // si plus grand que setpoint delta altitude on change de mode 			                	                	
 			                {
 			                   //time_begin_landing = hrt_absolute_time();
 			                   mode_landing_02 = false;
@@ -910,7 +920,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 			        	//mavlink_log_info(&_mavlink_log_pub, "landing 03");
 			        	_att_sp.yaw_body = 0.0f;
 					_att_sp.roll_body = 0.0f;
-					_att_sp.pitch_body = 0.0f; // A METTRE EN PARAMETRES 	 				            			  
+					_att_sp.pitch_body = _parameters.landing_pitch_hor_angle; // A METTRE EN PARAMETRES 	 				            			  
 			        }
 			}
 			else
@@ -920,8 +930,9 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 			}
 
 
-			#if 0
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// cest la section du landing normal (commentée avec le if 0)
+#if 0
 
 
 			// apply full flaps for landings. this flag will also trigger the use of flaperons
@@ -1173,7 +1184,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 							   radians(_parameters.pitch_limit_min));
 			}
 
-			#endif
+#endif
 		/////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////
 		} else if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF) {
@@ -1673,10 +1684,6 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	if (pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_LAND) {
-
-	}
 
 	if (_control_mode.flag_control_position_enabled) {
 		_last_manual = false;

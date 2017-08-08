@@ -125,7 +125,7 @@ PARAM_DEFINE_FLOAT(TK_IDLE_UP_TIME, 2000000.0f);
  * @increment 0.05
  * @group FW Attitude Control
  */
-PARAM_DEFINE_FLOAT(TK_FULL_UP_TIME, 230000.0f);
+PARAM_DEFINE_FLOAT(TK_FULL_UP_TIME, 150000.0f);
 
 /**
  * Custom takeoff timing: timing 11
