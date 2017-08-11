@@ -230,6 +230,8 @@ private:
 		float take_off_up_pos;
 		float take_off_down_pos;
 
+		float test_take_off_manual;
+
 	}		_parameters{};			/**< local copies of interesting parameters */
 
 	struct {
@@ -306,6 +308,8 @@ private:
 		param_t take_off_horizontal_pos;
 		param_t take_off_up_pos;
 		param_t take_off_down_pos;
+
+		param_t test_take_off_manual;
 
 	}		_parameter_handles{};		/**< handles for interesting parameters */
 
@@ -518,7 +522,8 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_parameter_handles.take_off_custom_time_11 = param_find("TK_FULL_DN_TIME");
 	_parameter_handles.take_off_horizontal_pos = param_find("TK_HOR_POS");
 	_parameter_handles.take_off_up_pos = param_find("TK_UP_POS");
-	_parameter_handles.take_off_down_pos = param_find("TK_DN_POS");
+	_parameter_handles.take_off_down_pos = param_find("TK_DN_POS"); 
+	_parameter_handles.test_take_off_manual = param_find("TK_MAN_TEST"); 	
 
 	/* fetch initial parameter values */
 	parameters_update();
@@ -642,7 +647,9 @@ FixedwingAttitudeControl::parameters_update()
 	param_get(_parameter_handles.take_off_custom_time_11, &_parameters.take_off_custom_time_11);
 	param_get(_parameter_handles.take_off_horizontal_pos, &_parameters.take_off_horizontal_pos);
 	param_get(_parameter_handles.take_off_up_pos, &_parameters.take_off_up_pos);
-	param_get(_parameter_handles.take_off_down_pos, &_parameters.take_off_down_pos);
+	param_get(_parameter_handles.take_off_down_pos, &_parameters.take_off_down_pos); 
+	param_get(_parameter_handles.test_take_off_manual, &_parameters.test_take_off_manual);
+
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
 	_pitch_ctrl.set_k_p(_parameters.p_p);
@@ -1431,9 +1438,11 @@ FixedwingAttitudeControl::task_main()
 				_actuators_airframe.control[1] = _parameters.take_off_horizontal_pos;
 			}
 
-			
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// si on switch en mode manual ou stabilized, on reset la sequence de decollage custom
-			if(!_vcontrol_mode.flag_control_attitude_enabled || !_vcontrol_mode.flag_control_rates_enabled)
+			if(!_vcontrol_mode.flag_control_attitude_enabled || !_vcontrol_mode.flag_control_rates_enabled || (!_vcontrol_mode.flag_control_climb_rate_enabled && !_vcontrol_mode.flag_control_offboard_enabled))
 			{
 				_actuators_airframe.control[1] = _parameters.take_off_horizontal_pos;
 
@@ -1448,6 +1457,19 @@ FixedwingAttitudeControl::task_main()
 
 			        mode_take_off_custom = false;
 			}
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+			if((int)_parameters.test_take_off_manual == 1)
+			{
+				_actuators.control[actuator_controls_s::INDEX_ROLL] = _manual.y * _parameters.man_roll_scale + _parameters.trim_roll;
+				_actuators.control[actuator_controls_s::INDEX_PITCH] = -_manual.x * _parameters.man_pitch_scale + _parameters.trim_pitch;
+			}
+
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			
 
 			// Add feed-forward from roll control output to yaw control output

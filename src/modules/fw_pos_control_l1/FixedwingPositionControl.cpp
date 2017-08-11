@@ -1275,8 +1275,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 
 					_att_sp.roll_body = 0.0f;
 					_att_sp.yaw_body = 0.0f;
-					//_att_sp.fw_control_yaw = 0.0f;
-					_att_sp.yaw_body = 0.0f;
+					_att_sp.fw_control_yaw = 0.0f;
 					_att_sp.pitch_body = _parameters.take_off_custom_pitch;
 
 					_att_sp.decollage_custom = true;
