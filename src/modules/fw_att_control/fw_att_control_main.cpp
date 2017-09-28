@@ -69,6 +69,8 @@
 #include <uORB/uORB.h>
 #include <vtol_att_control/vtol_type.h>
 
+#define D2R 0.01745f
+
 using matrix::Eulerf;
 using matrix::Quatf;
 
@@ -1316,10 +1318,12 @@ FixedwingAttitudeControl::task_main()
 						        // MET LA TETE DU PIVOT À LHORIZONTAL ET GARDE FULL THROTTLE
 						        if(mode_seq9)
 						        {
-						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
-						                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;
+						        		float err = 45.0f*D2R - _pitch;
+						        		float r2servo = _parameters.take_off_up_pos - _parameters.take_off_horizontal_pos;
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
+						                _actuators_airframe.control[1] =  err*r2servo+_parameters.take_off_horizontal_pos;
 
-						                if(hrt_absolute_time() - present_time >= 55000) //(int)_parameters.take_off_custom_time_10) // 40 ms	                	
+						                if(hrt_absolute_time() - present_time >= 1000000000) //(int)_parameters.take_off_custom_time_10) // Étienne 1000sec pour débugger
 						                {
 						                   present_time = hrt_absolute_time();
 						                   mode_seq9 = false;
