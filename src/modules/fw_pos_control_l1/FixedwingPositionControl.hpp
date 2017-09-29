@@ -315,7 +315,7 @@ private:
 		//float take_off_custom_time_07;
 		float take_off_custom_time_08;
 		float take_off_custom_time_09;
-		//float take_off_custom_time_10;
+		float take_off_custom_time_10;
 		float take_off_custom_time_11;
 		float take_off_horizontal_pos;
 		float take_off_up_pos;
@@ -397,7 +397,7 @@ private:
 		//param_t take_off_custom_time_07;
 		param_t take_off_custom_time_08;
 		param_t take_off_custom_time_09;
-		//param_t take_off_custom_time_10;
+		param_t take_off_custom_time_10;
 		param_t take_off_custom_time_11;
 		param_t take_off_horizontal_pos;
 		param_t take_off_up_pos;
