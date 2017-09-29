@@ -125,7 +125,9 @@ execute_process(
 #
 # must come before project to set toolchain
 
-set(CONFIG "posix_sitl_default" CACHE STRING "desired configuration")
+#set(CONFIG "posix_sitl_default" CACHE STRING "desired configuration")
+set(CONFIG "nuttx_px4fmu-v2_default" CACHE STRING "desired configuration")
+
 
 string(REPLACE "_" ";" config_args ${CONFIG})
 list(GET config_args 0 OS)

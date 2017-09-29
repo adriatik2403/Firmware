@@ -13,12 +13,12 @@ set(config_module_list
 	drivers/device
 	drivers/stm32
 	drivers/stm32/adc
-	drivers/stm32/tone_alarm
+	#drivers/stm32/tone_alarm
 	drivers/led
 	drivers/px4fmu
 	drivers/px4io
 	drivers/boards/px4fmu-v2
-	drivers/rgbled
+	#drivers/rgbled
 	drivers/mpu6000
 	drivers/mpu9250
 	drivers/lsm303d
@@ -53,6 +53,7 @@ set(config_module_list
 	drivers/lis3mdl
 	#drivers/iridiumsbd
 	drivers/ulanding
+	drivers/vl53l0x
 
 	#
 	# System commands
