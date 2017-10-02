@@ -179,6 +179,18 @@ PARAM_DEFINE_FLOAT(TK_CUSTM_PITCH, 0.79f);
 PARAM_DEFINE_FLOAT(TK_CON_KP, 0.20f);
 
 /**
+ * Custom takeoff pitch controler : Gain Kd
+ *
+ *
+ * @min 0.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.001
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(TK_CON_KD, 0.01f);
+
+/**
  * Custom takeoff timing: controller timing
  *
  * @unit us
