@@ -1,5 +1,5 @@
 /*******************************************************************************
-Copyright © 2015, STMicroelectronics International N.V.
+Copyright ï¿½ 2015, STMicroelectronics International N.V.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vl53l0x_platform.h"
 #include "vl53l0x_i2c_platform.h"
 #include "vl53l0x_api.h"
-#include <Windows.h>
+//#include <Windows.h>
 
 #define LOG_FUNCTION_START(fmt, ... )           _LOG_FUNCTION_START(TRACE_MODULE_PLATFORM, fmt, ##__VA_ARGS__)
 #define LOG_FUNCTION_END(status, ... )          _LOG_FUNCTION_END(TRACE_MODULE_PLATFORM, status, ##__VA_ARGS__)
@@ -262,14 +262,14 @@ VL53L0X_Error  VL53L0X_RdDWord(VL53L0X_DEV Dev, uint8_t index, uint32_t *data){
 VL53L0X_Error VL53L0X_PollingDelay(VL53L0X_DEV Dev){
     VL53L0X_Error status = VL53L0X_ERROR_NONE;
     LOG_FUNCTION_START("");
-
+#if 0
     const DWORD cTimeout_ms = 1;
     HANDLE hEvent = CreateEvent(0, TRUE, FALSE, 0);
     if(hEvent != NULL)
     {
         WaitForSingleObject(hEvent,cTimeout_ms);
     }
-
+#endif
     LOG_FUNCTION_END(status);
     return status;
 }

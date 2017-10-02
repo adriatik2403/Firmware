@@ -74,14 +74,14 @@
 
 #include <board_config.h>
 
-//#include "vl53l0x_api.h"
+#include "vl53l0x_api.h"
 
 /* Configuration Constants */
 #define VL53L0X_I2C_BUS 		PX4_I2C_BUS_EXPANSION
-#define VL53L0X_I2C_BASEADDR 	0x29 //0x52 /* 7-bit address. 8-bit address is 0xE0 */
+#define VL53L0X_I2C_BASEADDR 	0x29 //0x52 /* 7-bit address. 8-bit address is 0x52 */
 #define VL53L0X_DEVICE_PATH	"/dev/vl53l0x"
 
-/* MB12xx Registers addresses */
+/* VL53L0X Registers addresses */
 
 #define VL53L0X_TAKE_RANGE_REG	0x51		/* Measure range Register */
 #define VL53L0X_SET_ADDRESS_0	0xA0		/* Change address 0 Register */
@@ -204,7 +204,7 @@ private:
 extern "C" { __EXPORT int vl53l0x_main(int argc, char **argv);}
 
 VL53L0X::VL53L0X(int bus, int address) :
-	I2C("MB12xx", VL53L0X_DEVICE_PATH, bus, address, 100000),
+	I2C("VL53L0X", VL53L0X_DEVICE_PATH, bus, address, 100000),
 	_min_distance(VL53L0X_MIN_DISTANCE),
 	_max_distance(VL53L0X_MAX_DISTANCE),
 	_reports(nullptr),
@@ -222,7 +222,7 @@ VL53L0X::VL53L0X(int bus, int address) :
 
 {
 	/* enable debug() calls */
-	_debug_enabled = false;
+	_debug_enabled = true;
 
 	/* work_cancel in the dtor will explode if we don't do this... */
 	memset(&_work, 0, sizeof(_work));
@@ -251,7 +251,7 @@ int
 VL53L0X::init()
 {
 
-#if 0
+#if 1
 	int ret = PX4_ERROR;
 
 	/* do I2C init (and probe) first */
@@ -323,13 +323,12 @@ VL53L0X::init()
 
 	return ret;
 #endif
-    return OK;
 }
 
 int
 VL53L0X::probe()
 {
-	return measure();
+	return OK; //measure();
 }
 
 void

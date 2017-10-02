@@ -18,7 +18,6 @@
  */
 
 
-//#include <windows.h>
 #include <stdio.h>    // sprintf(), vsnprintf(), printf()
 
 #ifdef _MSC_VER
@@ -30,9 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <windows.h>
 #include <time.h>
-//#include "SERIAL_COMMS.h"
 //#include "comms_platform.h"
 
 #include "vl53l0x_platform_log.h"
@@ -58,15 +55,15 @@ uint8_t cached_page = 0;
 #define STATUS_OK              0x00
 #define STATUS_FAIL            0x01
 
-static HANDLE ghMutex;
+// static HANDLE ghMutex;
 
-static unsigned char _dataBytes[MAX_MSG_SIZE];
-
+// static unsigned char _dataBytes[MAX_MSG_SIZE];
+#if 0
 bool_t _check_min_version(void)
 {
     return TRUE;
 }
-
+#endif
 int VL53L0X_i2c_init(char *comPortStr, unsigned int baudRate) // mja
 {
     unsigned int status = STATUS_FAIL;
@@ -160,11 +157,13 @@ int VL53L0X_i2c_init(char *comPortStr, unsigned int baudRate) // mja
     {
         ReleaseMutex(ghMutex);
     }
-
+#endif
     return status;
 }
+
 int32_t VL53L0X_comms_close(void)
 {
+#if 0
     DWORD dwWaitResult;
     unsigned int status = STATUS_FAIL;
     char errorText[MAX_STR_SIZE];
@@ -183,13 +182,13 @@ int32_t VL53L0X_comms_close(void)
     CloseHandle(ghMutex);
     ghMutex = NULL;
 #endif
-    return status;
+    return STATUS_FAIL;
 }
 
 int32_t VL53L0X_write_multi(uint8_t address, uint8_t reg, uint8_t *pdata, int32_t count)
 {
     int32_t status = STATUS_OK;
-
+#if 0
     unsigned int retries = 3;
     uint8_t *pWriteData    = pdata;
     uint8_t writeDataCount = count;
@@ -255,13 +254,14 @@ int32_t VL53L0X_write_multi(uint8_t address, uint8_t reg, uint8_t *pdata, int32_
             SERIAL_COMMS_Get_Error_Text(debug_string);
         }
     }
-
+#endif
     return status;
 }
 
 int32_t VL53L0X_read_multi(uint8_t address, uint8_t index, uint8_t *pdata, int32_t count)
 {
     int32_t status = STATUS_OK;
+#if 0
     int32_t readDataCount = count;
 
     unsigned int retries = 3;
@@ -326,7 +326,7 @@ int32_t VL53L0X_read_multi(uint8_t address, uint8_t index, uint8_t *pdata, int32
 
     trace_i2c("Read  reg : 0x%04X, Val : 0x%s\n", index, value_as_str);
 #endif
-
+#endif
     return status;
 }
 
@@ -410,7 +410,7 @@ int32_t VL53L0X_read_byte(uint8_t address, uint8_t index, uint8_t *pdata)
 int32_t VL53L0X_read_word(uint8_t address, uint8_t index, uint16_t *pdata)
 {
     int32_t  status = STATUS_OK;
-	uint8_t  buffer[BYTES_PER_WORD];
+	uint8_t  buffer[BYTES_PER_WORD] = {0};
 
     status = VL53L0X_read_multi(address, index, buffer, BYTES_PER_WORD);
 	*pdata = ((uint16_t)buffer[0]<<8) + (uint16_t)buffer[1];
@@ -422,7 +422,7 @@ int32_t VL53L0X_read_word(uint8_t address, uint8_t index, uint16_t *pdata)
 int32_t VL53L0X_read_dword(uint8_t address, uint8_t index, uint32_t *pdata)
 {
     int32_t status = STATUS_OK;
-	uint8_t  buffer[BYTES_PER_DWORD];
+	uint8_t  buffer[BYTES_PER_DWORD] = {0};
 
     status = VL53L0X_read_multi(address, index, buffer, BYTES_PER_DWORD);
     *pdata = ((uint32_t)buffer[0]<<24) + ((uint32_t)buffer[1]<<16) + ((uint32_t)buffer[2]<<8) + (uint32_t)buffer[3];
@@ -432,7 +432,7 @@ int32_t VL53L0X_read_dword(uint8_t address, uint8_t index, uint32_t *pdata)
 }
 
 
-
+#if 0
 // 16 bit address functions
 
 
@@ -737,3 +737,4 @@ int32_t VL53L0X_get_timer_value(int32_t *ptimer_count)
        *ptimer_count = 0;
        return STATUS_FAIL;
 }
+#endif

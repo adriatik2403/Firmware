@@ -1,5 +1,6 @@
-/*
+/**
  * COPYRIGHT (C) STMicroelectronics 2014. All rights reserved.
+ * COPYRIGHT (C) Createk Design Lab 2017. All rights reserved.
  *
  * This software is the confidential and proprietary information of
  * STMicroelectronics ("Confidential Information").  You shall not
@@ -74,6 +75,8 @@ typedef unsigned char bool_t;
 
 int32_t VL53L0X_comms_initialise(uint8_t  comms_type,
                                           uint16_t comms_speed_khz);
+
+int VL53L0X_i2c_init(char *comPortStr, unsigned int baudRate);
 
 /**
  * @brief  Close platform comms.

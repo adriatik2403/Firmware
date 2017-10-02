@@ -38,7 +38,7 @@ set(SOURCES
 		Api/core/src/vl53l0x_api_core.c
 		Api/core/src/vl53l0x_api_ranging.c
 		Api/core/src/vl53l0x_api_strings.c
-		Api/platform/src/vl53l0x_i2c_win_serial_comms.c
+		Api/platform/src/vl53l0x_i2c_comms.c
 		Api/platform/src/vl53l0x_platform.c)
 #		Api/platform/src/vl53l0x_platform_log.c)
 
