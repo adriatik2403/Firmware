@@ -1334,7 +1334,7 @@ FixedwingAttitudeControl::task_main()
 						        // MET LA TETE DU PIVOT À LHORIZONTAL ET GARDE FULL THROTTLE
 						        if(mode_seq9)
 						        {
-                                        float r2servo = _parameters.take_off_up_pos - _parameters.take_off_horizontal_pos;
+                                        float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos)/(3.14159f/2);
                                         float err  = _parameters.take_off_custom_pitch - _pitch;
                                         float derr = (err - err0)/dt;
                                         err0 = err;
