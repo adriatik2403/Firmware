@@ -1334,12 +1334,12 @@ FixedwingAttitudeControl::task_main()
 						        // MET LA TETE DU PIVOT À LHORIZONTAL ET GARDE FULL THROTTLE
 						        if(mode_seq9)
 						        {
-                                        float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos)/(3.14159f/2);
+                                        float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos)/(3.14159f/2.0f);
                                         float err  = _parameters.take_off_custom_pitch - _pitch;
                                         float derr = (err - err0)/dt;
                                         err0 = err;
 
-						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
+						                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
                                         _actuators_airframe.control[1] =  (_parameters.take_off_control_kp*err+_parameters.take_off_control_kd*derr)*r2servo+_parameters.take_off_horizontal_pos;
 
 						                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_10) // Étienne augmenter param. pour débugger
