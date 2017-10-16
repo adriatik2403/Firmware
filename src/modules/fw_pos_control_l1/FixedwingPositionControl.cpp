@@ -1289,6 +1289,7 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 				_att_sp.pitch_reset_integral = _runway_takeoff.resetIntegrators();
 
 			} else {
+                mavlink_log_info(&_mavlink_log_pub, "Décollage sans piste - Étienne");
 				/* Perform launch detection */
 				if (_launchDetector.launchDetectionEnabled() &&
 				    _launch_detection_state != LAUNCHDETECTION_RES_DETECTED_ENABLEMOTORS) {
