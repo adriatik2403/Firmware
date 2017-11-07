@@ -1624,8 +1624,8 @@ FixedwingPositionControl::control_position(const math::Vector<2> &curr_pos, cons
 		   pos_sp_curr.type == position_setpoint_s::SETPOINT_TYPE_TAKEOFF &&
 		   _runway_takeoff.runwayTakeoffEnabled() && (hrt_absolute_time() - time_begin_take_off >= (int)total_time_takeoff)) {
 
-		_att_sp.thrust = _runway_takeoff.getThrottle(min(get_tecs_thrust(), throttle_max));
-
+		//_att_sp.thrust = _runway_takeoff.getThrottle(min(get_tecs_thrust(), throttle_max));
+        _att_sp.thrust = 1.0f;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	} else if (_control_mode_current == FW_POSCTRL_MODE_AUTO && // desactive le throttle setpoint si pas en mode take_off normal (POUR ÉVITER DE DONNER UN PULSE DE THROTTLE AU DÉMARRAGE)

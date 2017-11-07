@@ -1267,10 +1267,10 @@ FixedwingAttitudeControl::task_main()
 							mode_take_off_custom = true;
 							mode_seq0 = true;
 						}
-						else
-						{
+						//else
+						//{
 
-						}
+						//}
 
 						if(mode_take_off_custom == true)
 						{
@@ -1370,11 +1370,14 @@ FixedwingAttitudeControl::task_main()
 							
 							/////////////////////////////////////////////////////////////////////////////////////////
 							// test offset throttle en att control enabled (mission et stabilized je crois)
-							//throttle passed through if it is finite and if no engine failure was detected
+                            //throttle passed through if it is finite and if no engine failure was detected
+#if 0
 							_actuators.control[actuator_controls_s::INDEX_THROTTLE] = (PX4_ISFINITE(throttle_sp) &&
 									!(_vehicle_status.engine_failure ||
 									  _vehicle_status.engine_failure_cmd)) ?
 									throttle_sp : 0.0f;
+#endif
+                            _actuators.control[actuator_controls_s::INDEX_THROTTLE] = throttle_sp;
 							/////////////////////////////////////////////////////////////////////////////////////////
 
 							
