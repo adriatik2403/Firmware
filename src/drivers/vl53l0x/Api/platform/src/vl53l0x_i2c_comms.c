@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <modules/systemlib/err.h>
 //#include "comms_platform.h"
 
 #include "vl53l0x_platform_log.h"
@@ -66,7 +67,7 @@ bool_t _check_min_version(void)
 #endif
 int VL53L0X_i2c_init(char *comPortStr, unsigned int baudRate) // mja
 {
-    unsigned int status = STATUS_FAIL;
+    unsigned int status = STATUS_OK;
 #if 0
     const int cArgc = 7;
     int argc = cArgc;
@@ -185,9 +186,63 @@ int32_t VL53L0X_comms_close(void)
     return STATUS_FAIL;
 }
 
-int32_t VL53L0X_write_multi(uint8_t address, uint8_t reg, uint8_t *pdata, int32_t count)
+int32_t VL53L0X_write_multi(VL53L0X_DEV dev, uint8_t reg, uint8_t *pdata, int32_t count)
 {
-    int32_t status = STATUS_OK;
+//    int32_t status = STATUS_OK;
+
+    struct i2c_msg_s msgv[2];
+    unsigned msgs;
+    int ret;
+    uint8_t cmd[count + 1];
+    cmd[0] = reg;
+    for (int i = 0; i < count; ++i) {
+        cmd[i+1] = pdata[i];
+    }
+//    cmd[1] = &pdata[0];
+//    uint8_t *pcmd = cmd;
+//    unsigned retry_count = 0;
+
+//    do {
+
+        msgs = 0;
+
+//        if (count > 0) {
+            msgv[msgs].frequency = 100000;
+            msgv[msgs].addr = dev->I2cDevAddr;
+            msgv[msgs].flags = 0;
+            msgv[msgs].buffer = &cmd[0];
+            msgv[msgs].length = count + 1;
+            msgs++;
+//        }
+#if 0
+        if (recv_len > 0) {
+            msgv[msgs].frequency = _bus_clocks[_bus - 1];;
+            msgv[msgs].addr = _address;
+            msgv[msgs].flags = I2C_M_READ;
+            msgv[msgs].buffer = recv;
+            msgv[msgs].length = recv_len;
+            msgs++;
+        }
+#endif
+        if (msgs == 0) {
+            return -EINVAL;
+        }
+
+        ret = I2C_TRANSFER(dev->device_i2c_px4, &msgv[0], msgs);
+
+        /* success */
+        if (ret == OK) {
+            return STATUS_OK;
+        }
+#if 0
+        /* if we have already retried once, or we are going to give up, then reset the bus */
+        if ((retry_count >= 1) || (retry_count >= 0)) {
+            I2C_RESET(dev->device_i2c_px4);
+        }
+#endif
+//    } while (retry_count++ < 0);
+
+
 #if 0
     unsigned int retries = 3;
     uint8_t *pWriteData    = pdata;
@@ -255,12 +310,43 @@ int32_t VL53L0X_write_multi(uint8_t address, uint8_t reg, uint8_t *pdata, int32_
         }
     }
 #endif
-    return status;
+    return STATUS_FAIL;
 }
 
-int32_t VL53L0X_read_multi(uint8_t address, uint8_t index, uint8_t *pdata, int32_t count)
+int32_t VL53L0X_read_multi(VL53L0X_DEV dev, uint8_t index, uint8_t *pdata, int32_t count)
 {
-    int32_t status = STATUS_OK;
+//    int32_t status = STATUS_OK;
+
+
+    struct i2c_msg_s msgv[2];
+    unsigned msgs = 0;
+    int ret;
+
+    ret = VL53L0X_write_multi(dev,index, NULL, 0);
+
+    if (ret != OK) {
+        return STATUS_FAIL;
+    }
+
+    if (count > 0) {
+        msgv[msgs].frequency = 100000;
+        msgv[msgs].addr = dev->I2cDevAddr;
+        msgv[msgs].flags = I2C_M_READ;
+        msgv[msgs].buffer = pdata;
+        msgv[msgs].length = count;
+        msgs++;
+    }
+
+    if (msgs == 0) {
+        return -EINVAL;
+    }
+
+    ret = I2C_TRANSFER(dev->device_i2c_px4, &msgv[0], msgs);
+
+    /* success */
+    if (ret == OK) {
+        return STATUS_OK;
+    }
 #if 0
     int32_t readDataCount = count;
 
@@ -327,11 +413,11 @@ int32_t VL53L0X_read_multi(uint8_t address, uint8_t index, uint8_t *pdata, int32
     trace_i2c("Read  reg : 0x%04X, Val : 0x%s\n", index, value_as_str);
 #endif
 #endif
-    return status;
+    return STATUS_FAIL;
 }
 
 
-int32_t VL53L0X_write_byte(uint8_t address, uint8_t index, uint8_t data)
+int32_t VL53L0X_write_byte(VL53L0X_DEV dev, uint8_t index, uint8_t data)
 {
     int32_t status = STATUS_OK;
     const int32_t cbyte_count = 1;
@@ -340,14 +426,14 @@ int32_t VL53L0X_write_byte(uint8_t address, uint8_t index, uint8_t data)
     trace_print(TRACE_LEVEL_INFO,"Write reg : 0x%02X, Val : 0x%02X\n", index, data);
 #endif
 
-    status = VL53L0X_write_multi(address, index, &data, cbyte_count);
+    status = VL53L0X_write_multi(dev, index, &data, cbyte_count);
 
     return status;
 
 }
 
 
-int32_t VL53L0X_write_word(uint8_t address, uint8_t index, uint16_t data)
+int32_t VL53L0X_write_word(VL53L0X_DEV dev, uint8_t index, uint16_t data)
 {
     int32_t status = STATUS_OK;
 
@@ -359,13 +445,13 @@ int32_t VL53L0X_write_word(uint8_t address, uint8_t index, uint16_t data)
 
     if(index%2 == 1)
     {
-        status = VL53L0X_write_multi(address, index, &buffer[0], 1);
-        status = VL53L0X_write_multi(address, index + 1, &buffer[1], 1);
+        status = VL53L0X_write_multi(dev, index, &buffer[0], 1);
+        status = VL53L0X_write_multi(dev, index + 1, &buffer[1], 1);
         // serial comms cannot handle word writes to non 2-byte aligned registers.
     }
     else
     {
-        status = VL53L0X_write_multi(address, index, buffer, BYTES_PER_WORD);
+        status = VL53L0X_write_multi(dev, index, buffer, BYTES_PER_WORD);
     }
 
     return status;
@@ -373,7 +459,7 @@ int32_t VL53L0X_write_word(uint8_t address, uint8_t index, uint16_t data)
 }
 
 
-int32_t VL53L0X_write_dword(uint8_t address, uint8_t index, uint32_t data)
+int32_t VL53L0X_write_dword(VL53L0X_DEV dev, uint8_t index, uint32_t data)
 {
     int32_t status = STATUS_OK;
     uint8_t  buffer[BYTES_PER_DWORD];
@@ -384,19 +470,19 @@ int32_t VL53L0X_write_dword(uint8_t address, uint8_t index, uint32_t data)
     buffer[2] = (uint8_t)((data &  0x0000FF00) >> 8);
     buffer[3] = (uint8_t) (data &  0x000000FF);
 
-    status = VL53L0X_write_multi(address, index, buffer, BYTES_PER_DWORD);
+    status = VL53L0X_write_multi(dev, index, buffer, BYTES_PER_DWORD);
 
     return status;
 
 }
 
 
-int32_t VL53L0X_read_byte(uint8_t address, uint8_t index, uint8_t *pdata)
+int32_t VL53L0X_read_byte(VL53L0X_DEV dev, uint8_t index, uint8_t *pdata)
 {
     int32_t status = STATUS_OK;
     int32_t cbyte_count = 1;
 
-    status = VL53L0X_read_multi(address, index, pdata, cbyte_count);
+    status = VL53L0X_read_multi(dev, index, pdata, cbyte_count);
 
 #ifdef VL53L0X_LOG_ENABLE
     trace_print(TRACE_LEVEL_INFO,"Read reg : 0x%02X, Val : 0x%02X\n", index, *pdata);
@@ -407,24 +493,24 @@ int32_t VL53L0X_read_byte(uint8_t address, uint8_t index, uint8_t *pdata)
 }
 
 
-int32_t VL53L0X_read_word(uint8_t address, uint8_t index, uint16_t *pdata)
+int32_t VL53L0X_read_word(VL53L0X_DEV dev, uint8_t index, uint16_t *pdata)
 {
     int32_t  status = STATUS_OK;
 	uint8_t  buffer[BYTES_PER_WORD] = {0};
 
-    status = VL53L0X_read_multi(address, index, buffer, BYTES_PER_WORD);
+    status = VL53L0X_read_multi(dev, index, buffer, BYTES_PER_WORD);
 	*pdata = ((uint16_t)buffer[0]<<8) + (uint16_t)buffer[1];
 
     return status;
 
 }
 
-int32_t VL53L0X_read_dword(uint8_t address, uint8_t index, uint32_t *pdata)
+int32_t VL53L0X_read_dword(VL53L0X_DEV dev, uint8_t index, uint32_t *pdata)
 {
     int32_t status = STATUS_OK;
 	uint8_t  buffer[BYTES_PER_DWORD] = {0};
 
-    status = VL53L0X_read_multi(address, index, buffer, BYTES_PER_DWORD);
+    status = VL53L0X_read_multi(dev, index, buffer, BYTES_PER_DWORD);
     *pdata = ((uint32_t)buffer[0]<<24) + ((uint32_t)buffer[1]<<16) + ((uint32_t)buffer[2]<<8) + (uint32_t)buffer[3];
 
     return status;

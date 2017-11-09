@@ -73,12 +73,14 @@
 #include <uORB/topics/distance_sensor.h>
 
 #include <board_config.h>
+#include <drivers/vl53l0x/Api/platform/inc/vl53l0x_platform.h>
+#include <drivers/vl53l0x/Api/core/inc/vl53l0x_def.h>
 
 #include "vl53l0x_api.h"
 
 /* Configuration Constants */
 #define VL53L0X_I2C_BUS 		PX4_I2C_BUS_EXPANSION
-#define VL53L0X_I2C_BASEADDR 	0x29 //0x52 /* 7-bit address. 8-bit address is 0x52 */
+#define VL53L0X_I2C_BASEADDR 	0x29 /* 7-bit address. 8-bit address is 0x52 */
 #define VL53L0X_DEVICE_PATH	"/dev/vl53l0x"
 
 /* VL53L0X Registers addresses */
@@ -141,11 +143,11 @@ private:
 	std::vector<float>
 	_latest_sonar_measurements; /* vector to store latest sonar measurements in before writing to report */
 
-//    VL53L0X_Dev_t                       MyDevice;
-//    VL53L0X_Dev_t                       *pMyDevice  = &MyDevice;
-//    VL53L0X_Version_t                   Version;
-//    VL53L0X_Version_t                   *pVersion   = &Version;
-//    VL53L0X_DeviceInfo_t                DeviceInfo;
+    VL53L0X_Dev_t           MyDevice;
+    VL53L0X_Dev_t           * const pMyDevice = &MyDevice;
+    VL53L0X_Version_t       Version;
+    VL53L0X_Version_t       * pVersion = &Version;
+    VL53L0X_DeviceInfo_t    DeviceInfo;
 
 
 	/**
@@ -251,13 +253,109 @@ int
 VL53L0X::init()
 {
 
-#if 1
+
 	int ret = PX4_ERROR;
+    VL53L0X_Error status = VL53L0X_ERROR_NONE;
+    VL53L0X_RangingMeasurementData_t RangingMeasurementData;
+
+    uint32_t  refSpadCount;
+    uint8_t   isApertureSpads;
+    uint8_t   VhvSettings;
+    uint8_t   PhaseCal;
 
 	/* do I2C init (and probe) first */
 	if (I2C::init() != OK) {
-		return ret;
+        return ret;
+    }
+
+    MyDevice.I2cDevAddr = VL53L0X_I2C_BASEADDR;
+    MyDevice.comms_type = 1;
+    MyDevice.comms_speed_khz = 100;
+
+    MyDevice.device_i2c_px4 = _dev;
+
+    status = VL53L0X_DataInit(&MyDevice);
+	if (status != VL53L0X_ERROR_NONE) {
+		DEVICE_DEBUG("DataInit() failed");
+		return status;
 	}
+
+    status = VL53L0X_GetDeviceInfo(&MyDevice, &DeviceInfo);
+    if (status == VL53L0X_ERROR_NONE) {
+        warn("VL53L0X infos ::");
+        warn("Device name : %s", DeviceInfo.Name);
+        warn("Type: %s", DeviceInfo.Type);
+        warn("ID: %s", DeviceInfo.ProductId);
+        warn("Rev Major: %i", DeviceInfo.ProductRevisionMajor);
+        warn("Minor: %i", DeviceInfo.ProductRevisionMinor);
+    }
+
+    status = VL53L0X_StaticInit(pMyDevice);
+
+    if (status != VL53L0X_ERROR_NONE) {
+        DEVICE_DEBUG("VL53L0X staticInit() failed");
+        return status;
+    }
+
+
+
+#if 1
+    if ( status == VL53L0X_ERROR_NONE ) {
+        status = VL53L0X_PerformRefSpadManagement(pMyDevice, &refSpadCount, &isApertureSpads);
+        DEVICE_DEBUG("refSpadCourt : %i\tisApertureSpad : %i", refSpadCount, isApertureSpads);
+    }
+
+    if ( status == VL53L0X_ERROR_NONE ) {
+        status = VL53L0X_PerformRefCalibration(pMyDevice, &VhvSettings, &PhaseCal);
+    } else {
+        DEVICE_DEBUG("RefSpadManagement failed");
+        status = VL53L0X_ERROR_NONE;
+    }
+#endif
+
+    if (status == VL53L0X_ERROR_NONE) {
+        status = VL53L0X_SetDeviceMode( pMyDevice, VL53L0X_DEVICEMODE_SINGLE_RANGING );
+    } else {
+        DEVICE_DEBUG("RefCalibration failed");
+        status = VL53L0X_ERROR_NONE;
+    }
+
+    if( status == VL53L0X_ERROR_NONE ) {
+        status = VL53L0X_SetLimitCheckEnable( pMyDevice, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1 );
+    } else {
+        DEVICE_DEBUG("SetDeviceMode failed");
+        status = VL53L0X_ERROR_NONE;
+    }
+
+    if( status == VL53L0X_ERROR_NONE ) {
+        status = VL53L0X_SetLimitCheckEnable( pMyDevice, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1 );
+    } else {
+        DEVICE_DEBUG("set4 fail");
+        status = VL53L0X_ERROR_NONE;
+    }
+
+    if( status == VL53L0X_ERROR_NONE ) {
+        status = VL53L0X_SetLimitCheckEnable( pMyDevice, VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, 1 );
+    } else {
+        DEVICE_DEBUG("set5 fail");
+    }
+
+    if( status == VL53L0X_ERROR_NONE ) {
+        status = VL53L0X_SetLimitCheckValue( pMyDevice, VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, (FixPoint1616_t)( 1.5 * 0.023 * 65536 ) );
+    } else {
+        DEVICE_DEBUG("set6 fail");
+    }
+
+    if (status != VL53L0X_ERROR_NONE) {
+        DEVICE_DEBUG("set failed");
+        return status;
+    }
+
+    VL53L0X_PerformSingleRangingMeasurement( pMyDevice, &RangingMeasurementData );
+    char buf[VL53L0X_MAX_STRING_LENGTH];
+    VL53L0X_GetRangeStatusString(RangingMeasurementData.RangeStatus, buf);
+    DEVICE_DEBUG("Range status : %i\t%s", RangingMeasurementData.RangeStatus, buf);
+    DEVICE_DEBUG("Measure mm : %i", RangingMeasurementData.RangeMilliMeter);
 
 	/* allocate basic report buffers */
 	_reports = new ringbuffer::RingBuffer(2, sizeof(distance_sensor_s));
@@ -280,7 +378,7 @@ VL53L0X::init()
 	if (_distance_sensor_topic == nullptr) {
 		DEVICE_LOG("failed to create distance_sensor object. Did you start uOrb?");
 	}
-
+#if 0
 	// XXX we should find out why we need to wait 200 ms here
 	usleep(200000);
 
@@ -298,7 +396,7 @@ VL53L0X::init()
 			_latest_sonar_measurements.push_back(200);
 		}
 	}
-
+#endif
 	_index_counter = VL53L0X_I2C_BASEADDR;
 	set_address(_index_counter); /* set i2c port back to base adress for rest of driver */
 
@@ -322,13 +420,13 @@ VL53L0X::init()
 	_sensor_ok = true;
 
 	return ret;
-#endif
+
 }
 
 int
 VL53L0X::probe()
 {
-	return OK; //measure();
+	return OK;
 }
 
 void
@@ -534,27 +632,39 @@ VL53L0X::read(struct file *filp, char *buffer, size_t buflen)
 int
 VL53L0X::measure()
 {
+    int	ret = -EIO;
 
-	int ret;
+    VL53L0X_RangingMeasurementData_t RangingMeasurementData;
+    VL53L0X_PerformSingleRangingMeasurement( pMyDevice, &RangingMeasurementData );
+    char buf[VL53L0X_MAX_STRING_LENGTH];
+    VL53L0X_GetRangeStatusString(RangingMeasurementData.RangeStatus, buf);
+    DEVICE_DEBUG("Range status : %i\t%s", RangingMeasurementData.RangeStatus, buf);
+    DEVICE_DEBUG("Measure mm : %i", RangingMeasurementData.RangeMilliMeter);
 
-	/*
-	 * Send the command to begin a measurement.
-	 */
+    struct distance_sensor_s report;
+    report.timestamp = hrt_absolute_time();
+    report.type = distance_sensor_s::MAV_DISTANCE_SENSOR_ULTRASOUND;
+    report.orientation = 8;
+    report.current_distance = RangingMeasurementData.RangeMilliMeter;
+    report.min_distance = get_minimum_distance();
+    report.max_distance = get_maximum_distance();
+    report.covariance = 0.0f;
+    report.id = RangingMeasurementData.ZoneId;
 
-	uint8_t cmd[2];
-	cmd[0] = 0x00;
-	cmd[1] = VL53L0X_TAKE_RANGE_REG;
-	ret = transfer(cmd, 2, nullptr, 0);
+    /* publish it, if we are the primary */
+    if (_distance_sensor_topic != nullptr) {
+        orb_publish(ORB_ID(distance_sensor), _distance_sensor_topic, &report);
+    }
 
-	if (OK != ret) {
-		perf_count(_comms_errors);
-		DEVICE_DEBUG("i2c::transfer returned %d", ret);
-		return ret;
-	}
+    _reports->force(&report);
 
-	ret = OK;
+    /* notify anyone waiting for data */
+    poll_notify(POLLIN);
 
-	return ret;
+    ret = OK;
+
+    perf_end(_sample_perf);
+    return ret;
 }
 
 int
@@ -655,6 +765,7 @@ VL53L0X::cycle_trampoline(void *arg)
 void
 VL53L0X::cycle()
 {
+#if 0
 	if (_collect_phase) {
 		_index_counter = addr_ind[_cycle_counter]; /*sonar from previous iteration collect is now read out */
 		set_address(_index_counter);
@@ -691,7 +802,7 @@ VL53L0X::cycle()
 			return;
 		}
 	}
-
+#endif
 	/* Measurement (firing) phase */
 
 	/* ensure sonar i2c adress is still correct */

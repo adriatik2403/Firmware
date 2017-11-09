@@ -76,6 +76,9 @@ protected:
 	 */
 	int			_bus;
 
+
+    px4_i2c_dev_t		*_dev;
+
 	/**
 	 * @ Constructor
 	 *
@@ -143,7 +146,6 @@ protected:
 private:
 	uint16_t		_address;
 	uint32_t		_frequency;
-	px4_i2c_dev_t		*_dev;
 
 	I2C(const device::I2C &);
 	I2C operator=(const device::I2C &);

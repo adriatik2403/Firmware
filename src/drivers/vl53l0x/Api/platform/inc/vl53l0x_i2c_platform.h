@@ -24,6 +24,9 @@
 
 #include "vl53l0x_def.h"
 
+#include <px4_i2c.h>
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,6 +54,30 @@ extern "C" {
 #ifndef bool_t
 typedef unsigned char bool_t;
 #endif
+
+/**
+ * @struct  VL53L0X_Dev_t
+ * @brief    Generic PAL device type that does link between API and platform abstraction layer
+ *
+ */
+typedef struct {
+    VL53L0X_DevData_t Data;               /*!< embed ST Ewok Dev  data as "Data"*/
+
+    /*!< user specific field */
+    uint8_t   I2cDevAddr;                /*!< i2c device address user specific field */
+    uint8_t   comms_type;                /*!< Type of comms : VL53L0X_COMMS_I2C or VL53L0X_COMMS_SPI */
+    uint16_t  comms_speed_khz;           /*!< Comms speed [kHz] : typically 400kHz for I2C           */
+
+    px4_i2c_dev_t * device_i2c_px4;     /*!< Pointer to px4 device */
+
+} VL53L0X_Dev_t;
+
+
+/**
+ * @brief   Declare the device Handle as a pointer of the structure @a VL53L0X_Dev_t.
+ *
+ */
+typedef VL53L0X_Dev_t* VL53L0X_DEV;
 
 
 //#define	   I2C                0x01
@@ -112,7 +139,7 @@ int32_t VL53L0X_cycle_power(void);
  *
  * @endcode
  *
- * @param  address - uint8_t device address value
+ * @param  dev - uint8_t device address value
  * @param  index - uint8_t register index value
  * @param  pdata - pointer to uint8_t buffer containing the data to be written
  * @param  count - number of bytes in the supplied byte buffer
@@ -121,7 +148,7 @@ int32_t VL53L0X_cycle_power(void);
  *
  */
 
-int32_t VL53L0X_write_multi(uint8_t address, uint8_t index, uint8_t  *pdata, int32_t count);
+int32_t VL53L0X_write_multi(VL53L0X_DEV dev, uint8_t index, uint8_t *pdata, int32_t count);
 
 
 /**
@@ -139,7 +166,7 @@ int32_t VL53L0X_write_multi(uint8_t address, uint8_t index, uint8_t  *pdata, int
  *
  * @endcode
  *
- * @param  address - uint8_t device address value
+ * @param  dev - uint8_t device address value
  * @param  index - uint8_t register index value
  * @param  pdata - pointer to the uint8_t buffer to store read data
  * @param  count - number of uint8_t's to read
@@ -148,7 +175,7 @@ int32_t VL53L0X_write_multi(uint8_t address, uint8_t index, uint8_t  *pdata, int
  *
  */
 
-int32_t VL53L0X_read_multi(uint8_t address,  uint8_t index, uint8_t  *pdata, int32_t count);
+int32_t VL53L0X_read_multi(VL53L0X_DEV dev, uint8_t index, uint8_t *pdata, int32_t count);
 
 
 /**
@@ -166,7 +193,7 @@ int32_t VL53L0X_read_multi(uint8_t address,  uint8_t index, uint8_t  *pdata, int
  *
  * @endcode
  *
- * @param  address - uint8_t device address value
+ * @param  dev - uint8_t device address value
  * @param  index - uint8_t register index value
  * @param  data  - uint8_t data value to write
  *
@@ -174,7 +201,7 @@ int32_t VL53L0X_read_multi(uint8_t address,  uint8_t index, uint8_t  *pdata, int
  *
  */
 
-int32_t VL53L0X_write_byte(uint8_t address,  uint8_t index, uint8_t   data);
+int32_t VL53L0X_write_byte(VL53L0X_DEV dev, uint8_t index, uint8_t data);
 
 
 /**
@@ -193,7 +220,7 @@ int32_t VL53L0X_write_byte(uint8_t address,  uint8_t index, uint8_t   data);
  *
  * @endcode
  *
- * @param  address - uint8_t device address value
+ * @param  dev - uint8_t device address value
  * @param  index - uint8_t register index value
  * @param  data  - uin16_t data value write
  *
@@ -201,7 +228,7 @@ int32_t VL53L0X_write_byte(uint8_t address,  uint8_t index, uint8_t   data);
  *
  */
 
-int32_t VL53L0X_write_word(uint8_t address,  uint8_t index, uint16_t  data);
+int32_t VL53L0X_write_word(VL53L0X_DEV dev, uint8_t index, uint16_t data);
 
 
 /**
@@ -220,7 +247,7 @@ int32_t VL53L0X_write_word(uint8_t address,  uint8_t index, uint16_t  data);
  *
  * @endcode
  *
- * @param  address - uint8_t device address value
+ * @param  dev - uint8_t device address value
  * @param  index - uint8_t register index value
  * @param  data  - uint32_t data value to write
  *
@@ -228,7 +255,7 @@ int32_t VL53L0X_write_word(uint8_t address,  uint8_t index, uint16_t  data);
  *
  */
 
-int32_t VL53L0X_write_dword(uint8_t address, uint8_t index, uint32_t  data);
+int32_t VL53L0X_write_dword(VL53L0X_DEV dev, uint8_t index, uint32_t data);
 
 
 
@@ -247,7 +274,7 @@ int32_t VL53L0X_write_dword(uint8_t address, uint8_t index, uint32_t  data);
  *
  * @endcode
  *
- * @param  address - uint8_t device address value
+ * @param  dev - uint8_t device address value
  * @param  index  - uint8_t register index value
  * @param  pdata  - pointer to uint8_t data value
  *
@@ -255,7 +282,7 @@ int32_t VL53L0X_write_dword(uint8_t address, uint8_t index, uint32_t  data);
  *
  */
 
-int32_t VL53L0X_read_byte(uint8_t address,  uint8_t index, uint8_t  *pdata);
+int32_t VL53L0X_read_byte(VL53L0X_DEV dev, uint8_t index, uint8_t *pdata);
 
 
 /**
@@ -274,7 +301,7 @@ int32_t VL53L0X_read_byte(uint8_t address,  uint8_t index, uint8_t  *pdata);
  *
  * @endcode
  *
- * @param  address - uint8_t device address value
+ * @param  dev - uint8_t device address value
  * @param  index  - uint8_t register index value
  * @param  pdata  - pointer to uint16_t data value
  *
@@ -282,7 +309,7 @@ int32_t VL53L0X_read_byte(uint8_t address,  uint8_t index, uint8_t  *pdata);
  *
  */
 
-int32_t VL53L0X_read_word(uint8_t address,  uint8_t index, uint16_t *pdata);
+int32_t VL53L0X_read_word(VL53L0X_DEV dev, uint8_t index, uint16_t *pdata);
 
 
 /**
@@ -301,7 +328,7 @@ int32_t VL53L0X_read_word(uint8_t address,  uint8_t index, uint16_t *pdata);
  *
  * @endcode
  *
- * @param  address - uint8_t device address value
+ * @param  dev - uint8_t device address value
  * @param  index - uint8_t register index value
  * @param  pdata - pointer to uint32_t data value
  *
@@ -309,7 +336,7 @@ int32_t VL53L0X_read_word(uint8_t address,  uint8_t index, uint16_t *pdata);
  *
  */
 
-int32_t VL53L0X_read_dword(uint8_t address, uint8_t index, uint32_t *pdata);
+int32_t VL53L0X_read_dword(VL53L0X_DEV dev, uint8_t index, uint32_t *pdata);
 
 
 /**
