@@ -62,11 +62,11 @@ I2C::I2C(const char *name,
 	// public
 	// protected
 	_retries(0),
-	// private
 	_bus(bus),
+    _dev(nullptr),
+    // private
 	_address(address),
-	_frequency(frequency),
-	_dev(nullptr)
+	_frequency(frequency)
 {
 	// fill in _device_id fields for a I2C device
 	_device_id.devid_s.bus_type = DeviceBusType_I2C;
