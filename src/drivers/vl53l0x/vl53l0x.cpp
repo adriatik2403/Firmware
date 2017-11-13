@@ -297,13 +297,8 @@ VL53L0X::init()
         return status;
     }
 
-
-
-#if 1
-    if ( status == VL53L0X_ERROR_NONE ) {
-        status = VL53L0X_PerformRefSpadManagement(pMyDevice, &refSpadCount, &isApertureSpads);
-        DEVICE_DEBUG("refSpadCourt : %i\tisApertureSpad : %i", refSpadCount, isApertureSpads);
-    }
+    status = VL53L0X_PerformRefSpadManagement(pMyDevice, &refSpadCount, &isApertureSpads);
+    DEVICE_DEBUG("refSpadCourt : %i\tisApertureSpad : %i", refSpadCount, isApertureSpads);
 
     if ( status == VL53L0X_ERROR_NONE ) {
         status = VL53L0X_PerformRefCalibration(pMyDevice, &VhvSettings, &PhaseCal);
@@ -311,7 +306,6 @@ VL53L0X::init()
         DEVICE_DEBUG("RefSpadManagement failed");
         status = VL53L0X_ERROR_NONE;
     }
-#endif
 
     if (status == VL53L0X_ERROR_NONE) {
         status = VL53L0X_SetDeviceMode( pMyDevice, VL53L0X_DEVICEMODE_SINGLE_RANGING );
@@ -612,13 +606,13 @@ VL53L0X::read(struct file *filp, char *buffer, size_t buflen)
 
 		/* wait for it to complete */
 		usleep(_cycling_rate * 2);
-
+#if 0
 		/* run the collection phase */
 		if (OK != collect()) {
 			ret = -EIO;
 			break;
 		}
-
+#endif
 		/* state machine will have generated a report, copy it out */
 		if (_reports->get(rbuf)) {
 			ret = sizeof(*rbuf);
@@ -765,44 +759,6 @@ VL53L0X::cycle_trampoline(void *arg)
 void
 VL53L0X::cycle()
 {
-#if 0
-	if (_collect_phase) {
-		_index_counter = addr_ind[_cycle_counter]; /*sonar from previous iteration collect is now read out */
-		set_address(_index_counter);
-
-		/* perform collection */
-		if (OK != collect()) {
-			DEVICE_DEBUG("collection error");
-			/* if error restart the measurement state machine */
-			start();
-			return;
-		}
-
-		/* next phase is measurement */
-		_collect_phase = false;
-
-		/* change i2c adress to next sonar */
-		_cycle_counter = _cycle_counter + 1;
-
-		if (_cycle_counter >= addr_ind.size()) {
-			_cycle_counter = 0;
-		}
-
-		/* Is there a collect->measure gap? Yes, and the timing is set equal to the cycling_rate
-		   Otherwise the next sonar would fire without the first one having received its reflected sonar pulse */
-
-		if (_measure_ticks > USEC2TICK(_cycling_rate)) {
-
-			/* schedule a fresh cycle call when we are ready to measure again */
-			work_queue(HPWORK,
-				   &_work,
-				   (worker_t)&VL53L0X::cycle_trampoline,
-				   this,
-				   _measure_ticks - USEC2TICK(_cycling_rate));
-			return;
-		}
-	}
-#endif
 	/* Measurement (firing) phase */
 
 	/* ensure sonar i2c adress is still correct */
@@ -813,10 +769,6 @@ VL53L0X::cycle()
 	if (OK != measure()) {
 		DEVICE_DEBUG("measure error sonar adress %d", _index_counter);
 	}
-
-	/* next phase is collection */
-	_collect_phase = true;
-
 	/* schedule a fresh cycle call when the measurement is done */
 	work_queue(HPWORK,
 		   &_work,
@@ -937,7 +889,7 @@ test()
 	}
 
 	warnx("single read");
-	warnx("measurement: %0.2f m", (double)report.current_distance);
+	warnx("measurement: %0.2f mm", (double)report.current_distance);
 	warnx("time:        %llu", report.timestamp);
 
 	/* start the sensor polling at 2Hz */
