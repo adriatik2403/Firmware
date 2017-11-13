@@ -21,6 +21,10 @@ ekf2 start
 #
 trone start
 
+sleep 1
+
+vl53l0x start
+
 #
 # Start perching_wall controller
 #

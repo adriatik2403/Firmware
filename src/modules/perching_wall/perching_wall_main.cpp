@@ -168,7 +168,8 @@ private:
 	int		_vcontrol_mode_sub;		/**< vehicle status subscription */
 	int		_vehicle_land_detected_sub;	/**< vehicle land detected subscription */
 	int		_vehicle_status_sub;		/**< vehicle status subscription */
-	int 	_distance_sub;			/**< distance subscription */
+	int 	_distance_trone_sub;			/**< distance trone subscription */
+    int     _distance_vl53l0x_sub;      /**< distance vl53l0x subscription */
 
 	orb_advert_t	_rate_sp_pub;			/**< rate setpoint publication */
 	orb_advert_t	_attitude_sp_pub;		/**< attitude setpoint point */
@@ -190,7 +191,7 @@ private:
 	struct vehicle_land_detected_s			_vehicle_land_detected;	/**< vehicle land detected */
 	struct vehicle_rates_setpoint_s			_rates_sp;	/* attitude rates setpoint */
 	struct vehicle_status_s				_vehicle_status;	/**< vehicle status */
-    struct distance_sensor_s			_distance;
+    struct distance_sensor_s			_distance_trone, _distance_vl53l0x;
 
 	perf_counter_t	_loop_perf;			/**< loop performance counter */
 	perf_counter_t	_nonfinite_input_perf;		/**< performance counter for non finite input */
@@ -489,7 +490,8 @@ PerchingWall::PerchingWall() :
 	_vcontrol_mode_sub(-1),
 	_vehicle_land_detected_sub(-1),
 	_vehicle_status_sub(-1),
-    _distance_sub(-1),
+    _distance_trone_sub(-1),
+    _distance_vl53l0x_sub(-1),
 
 	/* publications */
 	_rate_sp_pub(nullptr),
@@ -536,7 +538,8 @@ PerchingWall::PerchingWall() :
 	_vcontrol_mode = {};
 	_vehicle_land_detected = {};
 	_vehicle_status = {};
-	_distance ={};
+	_distance_trone = {};
+    _distance_vl53l0x = {};
 
 	_parameter_handles.p_tc = param_find("FW_P_TC");
 	_parameter_handles.p_p = param_find("FW_PR_P");
@@ -884,11 +887,17 @@ void
 PerchingWall::distance_poll()
 {
 	bool distance_updated;
-	orb_check(_distance_sub, &distance_updated);
+	orb_check(_distance_trone_sub, &distance_updated);
 
 	if (distance_updated) {
-		orb_copy(ORB_ID(distance_sensor), _distance_sub, &_distance);
+		orb_copy(ORB_ID(distance_sensor), _distance_trone_sub, &_distance_trone);
 	}
+
+    orb_check(_distance_vl53l0x_sub, &distance_updated);
+
+    if (distance_updated) {
+        orb_copy(ORB_ID(distance_sensor), _distance_vl53l0x_sub, &_distance_vl53l0x);
+    }
 }
 
 void
@@ -1146,7 +1155,8 @@ PerchingWall::task_main()
 	_vehicle_status_sub = orb_subscribe(ORB_ID(vehicle_status));
 	_vehicle_land_detected_sub = orb_subscribe(ORB_ID(vehicle_land_detected));
 	_battery_status_sub = orb_subscribe(ORB_ID(battery_status));
-	_distance_sub = orb_subscribe(ORB_ID(distance_sensor));
+	_distance_trone_sub = orb_subscribe_multi(ORB_ID(distance_sensor),0);
+    _distance_vl53l0x_sub = orb_subscribe_multi(ORB_ID(distance_sensor),1);
 
 	// Set l'intervale à 200Hz ( boucle de controle )
 	orb_set_interval(_ctrl_state_sub, 5);
@@ -1348,7 +1358,7 @@ PerchingWall::task_main()
 
 
 				// PERCHING
-            } else if (_wall_landing || (_distance.current_distance <= 5.2f/((float)cos(q_att.to_euler()(1))) && (_distance.current_distance > 0.0f) && _flag_qd_calculated && !_take_off && !_recovery && !_mb_landed && !_landed && !_climb)) { //(_threshold_accel && (_distance.current_distance < 5.2f || _wall_landing))
+            } else if (_wall_landing || (_distance_trone.current_distance <= 5.2f/((float)cos(q_att.to_euler()(1))) && (_distance_trone.current_distance > 0.0f) && _flag_qd_calculated && !_take_off && !_recovery && !_mb_landed && !_landed && !_climb)) { //(_threshold_accel && (_distance.current_distance < 5.2f || _wall_landing))
 
                    // && (_distance.current_distance > 0.0f) ---> condition necessaire pcq dehors le capteur switch de la mesure reelle au minimum (0.2 m), si trop de lumiere du soleil
 
