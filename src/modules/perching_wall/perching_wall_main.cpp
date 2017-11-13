@@ -39,7 +39,7 @@
  * @author Thomas Gubler 	<thomasgubler@gmail.com>
  * @author Roman Bapst		<bapstr@ethz.ch>
  * @author Thomas Courteau  <thomas.robichaud.courteau@gmail.com>
- *
+ * @author Dino Mehanovic   <dino.mehanovic@usherbrooke.ca>
  */
 
 #include <px4_config.h>
@@ -126,6 +126,7 @@ private:
     bool        _level;             /**< level flight */
     bool        _recovery;          /**< recovery */
     bool        _mb_landed;         /**< maybe landed, wait for 0.7s and check accZ_n */
+    bool        _man_flight;        /**< manual flight */
 
     bool _flag_qd_calculated;
     math::Quaternion _qe;
@@ -454,6 +455,7 @@ PerchingWall::PerchingWall() :
     _level(false),
     _recovery(false),
     _mb_landed(false),
+    _man_flight(true),
 
 
     _flag_qd_calculated(false),
@@ -934,7 +936,7 @@ PerchingWall::hover_control(const math::Quaternion &q)
 		// Thrust feedback
 		// 1.308 rad: 75 deg
 		// 1.1345 rad: 65 deg
-		if (q.to_euler()(1) < 1.1345f && _hover_speed_comm > -0.1f) { //&& _hover_speed_comm < 0.0f // making sure to not go back to 0.0f speed command
+        if (q.to_euler()(1) < 1.31f && _hover_speed_comm > -0.001f) { //&& _hover_speed_comm < 0.0f // making sure to not go back to 0.0f speed command
 			_hover_speed_comm = 0.0f;
 
 			// low saturation on ailerons and rudder during pitch-up
@@ -942,24 +944,45 @@ PerchingWall::hover_control(const math::Quaternion &q)
 			//outputs[0] = outputs[0]/3.0f;
 			//outputs[2] = outputs[2]/3.0f;
 
-			if (outputs[0] >= 0.25f) {
-				outputs[0] = 0.25f;
-			} else if (outputs[2] <= -0.25f) {
-				outputs[0] = -0.25f;
+           // outputs[0] = outputs[0] + 0.2f;
+
+            // Ailerons saturation approx until SSD (2017-10-05)
+            if (outputs[0] >= 0.25f) { // used to be limited to 0.25
+                outputs[0] = 0.25f;
+            } else if (outputs[0] <= -0.25f) {
+                outputs[0] = -0.25f;
 			}
+
+            // Rudder saturation approx until SSD (2017-10-05)
+            if (outputs[2] >= 0.5f) {
+                outputs[2] = 0.5f;
+            } else if (outputs[2] <= -0.5f) {
+                outputs[2] = -0.5f;
+            }
 
 
 		} else {
-			_hover_speed_comm = -0.2f;
+            _hover_speed_comm = -0.2f;
 
+           // outputs[0] = outputs[0] + 0.2f;
+
+           /*
+            if (outputs[2] >= 1.0f) {
+                outputs[2] = 1.0f;
+            } else if (outputs[2] <= -0.05f) {
+                outputs[2] = -0.05f;
+            }
+            */
 		}
 
 		//_hover_speed_comm = 0.0f;
 
-		outputs[3] = ((_gain.Kp[3] * _speed_error) + (_speed_derivate * _gain.Kd[3]) + _speed_integrate * _gain.Ki[3]) + 0.7f;
+        // outputs[3] = ((_gain.Kp[3] * _speed_error) + (_speed_derivate * _gain.Kd[3]) + _speed_integrate * _gain.Ki[3]) + 0.6f;
 
-		if (outputs[3] < 0.23f){
-			outputs[3] = 0.23f;
+        outputs[3] = 0.65;
+
+        if (outputs[3] < 0.35f){
+            outputs[3] = 0.35f;
 		} else if (outputs[3] > 1.0f){
 			outputs[3] = 1.0f;
 		}
@@ -967,17 +990,16 @@ PerchingWall::hover_control(const math::Quaternion &q)
 		// RECOVERY
 	} else if (_recovery) {
 
-		if (_time < 2.0f) {
-			_hover_speed_comm = 1.0f;
+        if (_time < 1.5f) {
+            _hover_speed_comm = 1.0f;
 		} else {
-			_hover_speed_comm = 0.0f;
+            _hover_speed_comm = 0.1f;
 		}
 
-		outputs[3] = ((_gain.Kp[3] * _speed_error) + (_speed_derivate * _gain.Kd[3]) + _speed_integrate * _gain.Ki[3]) + 0.7f;
+        outputs[3] = ((_gain.Kp[3] * _speed_error) + (_speed_derivate * _gain.Kd[3]) + _speed_integrate * _gain.Ki[3]) + 0.65f;
 
 		if (outputs[3] < 0.23f){
-			outputs[3] = 0.23f;
-		} else if (outputs[3] > 1.0f){
+            outputs[3] = 0.23f;		} else if (outputs[3] > 1.0f){
 			outputs[3] = 1.0f;
 		}
 
@@ -986,7 +1008,7 @@ PerchingWall::hover_control(const math::Quaternion &q)
 	} else if (_take_off) {
 		if (_time < 1.0f) {
 			//outputs[3] = 0.68f;
-			_hover_speed_comm = 0.8f;
+            _hover_speed_comm = 1.0f;
 			//outputs[3] = 0.60f;
 			outputs[3] = ((_gain.Kp[3] * _speed_error) + (_speed_derivate * _gain.Kd[3]) + _speed_integrate * _gain.Ki[3]) + 0.7f;
 			if (outputs[3] > 1.0f)
@@ -997,7 +1019,7 @@ PerchingWall::hover_control(const math::Quaternion &q)
 			//outputs[3] = 0.0f;
 		} else {
 			//outputs[3] = 0.60f;
-			_hover_speed_comm = 0.2f;
+            _hover_speed_comm = 0.1f;
 			outputs[3] = ((_gain.Kp[3] * _speed_error) + (_speed_derivate * _gain.Kd[3]) + _speed_integrate * _gain.Ki[3]) + 0.7f;
 			if (outputs[3] > 1.0f)
 				outputs[3] = 1.0f;
@@ -1038,6 +1060,7 @@ PerchingWall::hover_control(const math::Quaternion &q)
 	_actuators.control[actuator_controls_s::INDEX_PITCH] = outputs[1];
 	_actuators.control[actuator_controls_s::INDEX_YAW] = outputs[2];
 	_actuators.control[actuator_controls_s::INDEX_THROTTLE] = outputs[3];
+    
 }
 
 void
@@ -1074,7 +1097,7 @@ PerchingWall::calculation_error(const math::Quaternion & q)
 	_speed_z_axis = _speed_z_axis_old + accelZ * _dt; //
 
 	// if (angle2 > 1.39f) {
-	_speed_error = _hover_speed_comm - (_speed_z_axis); // float added ro _speed_z_axis as speed calculation bias
+    _speed_error = _hover_speed_comm - (_speed_z_axis); // float added ro _speed_z_axis as speed calculation bias
 	//} else {
 	//    _speed_error = _hover_speed_comm - _speed_z_axis;
 	// }
@@ -1216,18 +1239,41 @@ PerchingWall::task_main()
 				_time += _dt; // deltaT
 			}
 
-			if ((_ctrl_state.x_acc > 2.05f * _g) || (_time_level > 0)) {
+            if ((_ctrl_state.x_acc > 2.00f * _g) || (_time_level > 0)) {
 
 				_time_level += _dt; // deltaT
 			}
 
-			// yaw_sp fixed for feedback at launch
-			if ((float (fabs(_ctrl_state.z_acc)) > 0.0f) && !_wall_landing && !_landed && !_take_off) { // ((_ctrl_state.x_acc > (2.05f * _g)) && !_wall_landing && !_landed && !_climb && !_take_off)
+            /*
+            // yaw_sp and Vz fixed for feedback at wall detection
+            if (_wall_landing) { // ((_ctrl_state.x_acc > (2.05f * _g)) && !_wall_landing && !_landed && !_climb && !_take_off)
 				if (!_flag_qd_calculated) {
+
 					_yaw_sp = q_att.to_euler()(2);
+                    _speed_z_axis = 0.0f;
+
 					_flag_qd_calculated = true;
 				}
 			}
+            */
+
+            // yaw_sp fixed for feedback at launch
+            if ((float (fabs(_ctrl_state.x_acc)) > (2.00f * _g)) && !_wall_landing && !_landed && !_take_off && !_mb_landed && !_recovery) { // ((_ctrl_state.x_acc > (2.05f * _g)) && !_wall_landing && !_landed && !_climb && !_take_off)
+                if (!_flag_qd_calculated) {
+                    _yaw_sp = q_att.to_euler()(2);
+                    _flag_qd_calculated = true;
+                }
+            }
+
+
+
+            // unflag _flag_qd_calculated when landed, to prepare for next perching attempt
+            if (_landed) { // ((_ctrl_state.x_acc > (2.05f * _g)) && !_wall_landing && !_landed && !_climb && !_take_off)
+                if (_flag_qd_calculated) {
+                    _flag_qd_calculated = false;
+                }
+            }
+
 
 /*
             if (_climb) {
@@ -1243,37 +1289,81 @@ PerchingWall::task_main()
 */
 
 
+            // LOG VERTICAL VELOCITY
+            //_actuators.control[actuator_controls_s::INDEX_FLAPS] = _speed_z_axis;
+
+
+
+
+
+
+            //*******************************************//
+            // accX and accZ out of control loop calculation
+            float angle2 = q_att.to_euler()(1);
+            float angle3 = q_att.to_euler()(0);
+
+            float s2 = (float)sin(angle2);
+            float c2 = (float)cos(angle2);
+            float s3 = (float)sin(angle3);
+            float c3 = (float)cos(angle3);
+
+            float ax = _ctrl_state.x_acc;
+            float ay = _ctrl_state.y_acc;
+            float az = _ctrl_state.z_acc;
+
+            float gi = 9.8f;
+
+            float accX = ax*c2 + az*s2;
+            float accZ = -(-ax*s2 + ay*s3*c2 + az*c2*c3 + gi);
+            //*******************************************//
+
+
 			// MAYBE LANDED
-			if ((q_att.to_euler()(1) > 1.31f && (_wall_landing && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f)) || _mb_landed || (_recovery && (_time >= 5.0f)) ) { // || (_climb && (_time_climb >= 3.0f))) {
-				//  if ((q_att.to_euler()(1) > 1.34f && ((_wall_landing && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f) || (_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f)))|| _landed || (_climb && !_climb_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 100000.0f) || (_climb && _time_climb > 100.0f) || (_wall_landing && _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) ) {
+       // OLD - TOTAL ACCEL     if ((q_att.to_euler()(1) > 1.31f && (_wall_landing && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f)) || _mb_landed || (_recovery && (_time >= 3.0f)) ) { // || (_climb && (_time_climb >= 3.0f))) {
+
+                if ((q_att.to_euler()(1) > 1.396f && (_wall_landing && accX < -9.0f) && _time_level > 1.3f && (_manual.return_switch != manual_control_setpoint_s::SWITCH_POS_ON)) || _mb_landed || (_recovery && (_time >= 20.0f)) ) { // || (_climb && (_time_climb >= 3.0f))) {
+                //  if ((q_att.to_euler()(1) > 1.34f && ((_wall_landing && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f) || (_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f)))|| _landed || (_climb && !_climb_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 100000.0f) || (_climb && _time_climb > 100.0f) || (_wall_landing && _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) ) {
 				_wall_landing = false;
 				_recovery = false;
 				_landed = false;
 				_take_off = false;
 				_climb = false;
-				_flag_qd_calculated = false;
+                _man_flight = false;
+                //_flag_qd_calculated = false;
 				_mb_landed = true;
 				_time_climb = 0;
 
-				_actuators.control[actuator_controls_s::INDEX_ROLL] = 0.0f + _parameters.trim_roll;
-				_actuators.control[actuator_controls_s::INDEX_PITCH] = 0.0f + _parameters.trim_pitch;
-				_actuators.control[actuator_controls_s::INDEX_YAW] = 0.0f + _parameters.trim_yaw;
-				_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
+                _actuators.control[actuator_controls_s::INDEX_ROLL] = 0.0f ; // + _parameters.trim_roll;
+                _actuators.control[actuator_controls_s::INDEX_PITCH] = 0.0f ; // + _parameters.trim_pitch;
+                _actuators.control[actuator_controls_s::INDEX_YAW] = 0.0f ; // + _parameters.trim_yaw;
+
+
+                // _time is not re-initialized to 0 if we come back to _mb_landed after recovery... to do!
+                //if (_time > 0.01f) { // maybe use >= instead of >
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f ; // 0.25f;
+                //}
+                //else {
+                //    _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
+                //}
 
 
 				// PERCHING
-			} else if (_wall_landing || (_distance.current_distance <= 6.0f/((float)cos(q_att.to_euler()(1)) + 0.0001f) && !_take_off && !_recovery && !_mb_landed && !_landed && !_climb)) { //(_threshold_accel && (_distance.current_distance < 5.2f || _wall_landing))
-				//_launch = false;
+            } else if (_wall_landing || (_distance.current_distance <= 5.2f/((float)cos(q_att.to_euler()(1))) && (_distance.current_distance > 0.0f) && _flag_qd_calculated && !_take_off && !_recovery && !_mb_landed && !_landed && !_climb)) { //(_threshold_accel && (_distance.current_distance < 5.2f || _wall_landing))
+
+                   // && (_distance.current_distance > 0.0f) ---> condition necessaire pcq dehors le capteur switch de la mesure reelle au minimum (0.2 m), si trop de lumiere du soleil
+
+                    //_launch = false;
 				_level = false;
+                _man_flight = false;
 				_wall_landing = true;
 
 				_time = 0; // set to zero for start of checks in _mb_landed modes
 
 				// Define quaternion setpoint
 				if (q_att.to_euler()(1) > 0.7854f) {
-					_qd.from_euler(0.0f, 1.4486, _yaw_sp); //83 deg = 1.4486... 85 deg = 1.4835
+                    _qd.from_euler(0.0f, 1.4486f, _yaw_sp); //83 deg = 1.4486... 85 deg = 1.4835
 				} else {
-					_qd.from_euler(0.0f, 1.4486, _yaw_sp);
+                    _qd.from_euler(0.0f, 1.4486f, _yaw_sp);
 				}
 
 				hover_control(q_att);
@@ -1281,69 +1371,71 @@ PerchingWall::task_main()
 			}
 
 				// Level flight feedback
-			else if (_level || ((_time_level >= 0.35f) && (_distance.current_distance > 2.0f/((float)cos(q_att.to_euler()(1)) + 0.0001f)) && !_wall_landing && !_take_off && !_mb_landed && !_landed && !_climb && !_recovery)) {
+            /*else if (_level || ((_time_level >= 0.35f) && (_distance.current_distance > 6.0f/((float)cos(q_att.to_euler()(1)) + 0.0001f)) && !_wall_landing && !_take_off && !_mb_landed && !_landed && !_climb && !_recovery)) {
 				//_launch = false;
 				_level = true;
 
 				_qd.from_euler(0.0f, 0.175f, _yaw_sp);
 
 				hover_control(q_att);
-			}
+            }*/
+
+            else {
+            //else if (_man_flight || (_take_off && _time >= 3.0f)) {
 
 
-			else {
 				// LAUNCH
-				_actuators.control[actuator_controls_s::INDEX_ROLL] = -0.05f + _parameters.trim_roll;
-				_actuators.control[actuator_controls_s::INDEX_PITCH] = 0.35f + _parameters.trim_pitch;
-				_actuators.control[actuator_controls_s::INDEX_YAW] = 0.0f + _parameters.trim_yaw;
-				_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.24f;
-			}
+                _actuators.control[actuator_controls_s::INDEX_ROLL] = 0.0f ; // + _parameters.trim_roll;
+                _actuators.control[actuator_controls_s::INDEX_PITCH] = 0.35f ; // + _parameters.trim_pitch;
+                _actuators.control[actuator_controls_s::INDEX_YAW] = -0.05f ; // + _parameters.trim_yaw;
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.25f;
 
 
-			// accZ out of control loop calculation
-			float angle2 = q_att.to_euler()(1);
-			float angle3 = q_att.to_euler()(0);
+                /*
+                // VOL MANUEL
+                _actuators.control[actuator_controls_s::INDEX_ROLL] = _manual.y + _parameters.trim_roll;
+                _actuators.control[actuator_controls_s::INDEX_PITCH] = _manual.x + _parameters.trim_pitch;
+                _actuators.control[actuator_controls_s::INDEX_YAW] = _manual.r + _parameters.trim_yaw;
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z;
+                */
 
-			float s2 = (float)sin(angle2);
-			float c2 = (float)cos(angle2);
-			float s3 = (float)sin(angle3);
-			float c3 = (float)cos(angle3);
+            }
 
-			float ax = _ctrl_state.x_acc;
-			float ay = _ctrl_state.y_acc;
-			float az = _ctrl_state.z_acc;
 
-			float gi = 9.8f;
 
-			float accZ = -(-ax*s2 + ay*s3*c2 + az*c2*c3 + gi);
 
 			// RECOVERY
 			//if((_mb_landed && (_time >= 0.2f) && (float (fabs(_ctrl_state.x_acc)) > 0.0f)) || _recovery || (_landed && (float (fabs(_ctrl_state.x_acc)) > 2.0f))) {
+            if((_mb_landed && (_time >= 0.20f) && (accZ <= -300.0f)) || _recovery) { // || (_landed && (accelZ < -3.0f))) {
 
-
-			if((_mb_landed && (_time >= 0.1f) && (accZ < -6.0f)) || _recovery) { // || (_landed && (accelZ < -3.0f))) {
-
-				_mb_landed = false;
+                // ****Use these conditions for _time variable initialization?...****
+                _mb_landed = false;
 				_landed = false;
 				_recovery = true;
 				//_time = 0;
 
-				if (_time < 2.0f) {
-					_qd.from_euler(0.0f, 1.75, _yaw_sp);
+                if (_time < 1.5f) {
+                    _qd.from_euler(0.0f, 1.7f, _yaw_sp);
 				} else {
-					_qd.from_euler(0.0f, 1.4486, _yaw_sp);
+                    _qd.from_euler(0.0f, 1.55f, _yaw_sp);
 				}
 
 				hover_control(q_att);
 
-				// LANDED
-			} else if((_mb_landed && (_time >= 2.0f)) || _landed || (_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f) || _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) { // || _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) {
+
+            }
+
+            // LANDED
+            if((_mb_landed) || _landed || (_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 1000000.0f) || _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) { // || _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) {
+
+               // LATEST WITH USE OF RECOVERY, USING TIME CHECK WITH _mb_landed
+               // if((_mb_landed && (_time >= 2.0f)) || _landed || (_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 1000000.0f) || _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) { // || _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) {
+
 
 				// if((_mb_landed && (_time >= 2.0f)) || _landed || (_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f) || _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) { // || _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) {
 
 				_wall_landing = false;
 				_recovery = false;
-				_landed = false;
 				//_threshold_accel = false;
 				_take_off = false;
 				_climb = false;
@@ -1358,9 +1450,9 @@ PerchingWall::task_main()
 				_speed_z_axis = 0.0f;
 
 
-				_actuators.control[actuator_controls_s::INDEX_ROLL] = 0.0f + _parameters.trim_roll;
-				_actuators.control[actuator_controls_s::INDEX_PITCH] = 0.0f + _parameters.trim_pitch;
-				_actuators.control[actuator_controls_s::INDEX_YAW] = 0.0f + _parameters.trim_yaw;
+                _actuators.control[actuator_controls_s::INDEX_ROLL] = 0.0f ; // + _parameters.trim_roll;
+                _actuators.control[actuator_controls_s::INDEX_PITCH] = 0.0f ; // + _parameters.trim_pitch;
+                _actuators.control[actuator_controls_s::INDEX_YAW] = 0.0f ; // + _parameters.trim_yaw;
 				_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
 			}
 
@@ -1368,11 +1460,11 @@ PerchingWall::task_main()
 
 
 			// TAKE OFF
-			if (_take_off || (_manual.return_switch == manual_control_setpoint_s::SWITCH_POS_ON)) {
+            if (_take_off){ // || (_manual.return_switch == manual_control_setpoint_s::SWITCH_POS_ON)) {
 				_landed = false;
 				_take_off = true;
 
-				_qd.from_euler(0.0f, 1.75f, _yaw_sp);
+                _qd.from_euler(0.0f, 1.83f, _yaw_sp); // 1.83f (115 deg) pour les tests dehors,,,
 
 				hover_control(q_att);
 			}
