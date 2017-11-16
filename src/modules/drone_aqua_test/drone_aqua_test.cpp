@@ -1078,6 +1078,13 @@ DroneAquaTest::task_main()
 		// FULL THROTTLE PENDANT UN CERTAIN TEMPS
 	        if(mode_seq8)
 	        {
+					_qd.from_euler(0.0f, _parameters.take_off_custom_pitch, 0.0f);
+					_qm = q_att.conjugated();
+					_qe = _qm * _qd;
+					_euler_error = _qe.to_euler();
+
+					_euler_error(1)
+
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
 	                _actuators_airframe.control[1] = _parameters.take_off_up_pos;
 
