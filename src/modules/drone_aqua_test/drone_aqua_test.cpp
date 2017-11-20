@@ -1064,8 +1064,15 @@ DroneAquaTest::task_main()
 		// IDLE DU THRUST A 30% PENDANT UN CERTAIN TEMPS
 	        if(mode_seq7)
 	        {
+
+					_qd.from_euler(0.0f, _parameters.take_off_custom_pitch, 0.0f);
+					_qm = q_att.conjugated();
+					_qe = _qm * _qd;
+					_euler_error = _qe.to_euler();
+					float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos)/(3.14159f/2);
+
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.30f;
-	                _actuators_airframe.control[1] = _parameters.take_off_up_pos;
+	                _actuators_airframe.control[1] = _euler_error(1)*r2servo + _parameters.take_off_horizontal_pos;
 
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_08) // 2 sec	                	
 	                {
