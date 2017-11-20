@@ -1082,11 +1082,10 @@ DroneAquaTest::task_main()
 					_qm = q_att.conjugated();
 					_qe = _qm * _qd;
 					_euler_error = _qe.to_euler();
-
-					_euler_error(1)
+                    float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos)/(3.14159f/2);
 
 	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
-	                _actuators_airframe.control[1] = _parameters.take_off_up_pos;
+	                _actuators_airframe.control[1] = _euler_error(1)*r2servo + _parameters.take_off_horizontal_pos;
 
 	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_09) // 120 ms	                	
 	                {
