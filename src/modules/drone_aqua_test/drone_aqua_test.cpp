@@ -879,132 +879,131 @@ DroneAquaTest::task_main_trampoline(int argc, char *argv[])
 	drone_aqua_test_control::g_control->task_main();
 }
 void
-DroneAquaTest::task_main()
-{	
+DroneAquaTest::task_main() {
 
-	_wake_up_slave_topic_2 = orb_advertise(ORB_ID(wake_up_slave_info_2), &report_wake_up_slave_2);
-	_charging_info_topic_2 = orb_advertise(ORB_ID(charging_info_2), &report_charging_2);
+    _wake_up_slave_topic_2 = orb_advertise(ORB_ID(wake_up_slave_info_2), &report_wake_up_slave_2);
+    _charging_info_topic_2 = orb_advertise(ORB_ID(charging_info_2), &report_charging_2);
 
-	/*
-	 * do subscriptions ()
-	 */
-	_att_sp_sub = orb_subscribe(ORB_ID(vehicle_attitude_setpoint));
-	_ctrl_state_sub = orb_subscribe(ORB_ID(control_state));
-	_accel_sub = orb_subscribe_multi(ORB_ID(sensor_accel), 0);
-	_vcontrol_mode_sub = orb_subscribe(ORB_ID(vehicle_control_mode));
-	_params_sub = orb_subscribe(ORB_ID(parameter_update));
-	_manual_sub = orb_subscribe(ORB_ID(manual_control_setpoint));
-	_global_pos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
-	_vehicle_status_sub = orb_subscribe(ORB_ID(vehicle_status));
-	_vehicle_land_detected_sub = orb_subscribe(ORB_ID(vehicle_land_detected));
+    /*
+     * do subscriptions ()
+     */
+    _att_sp_sub = orb_subscribe(ORB_ID(vehicle_attitude_setpoint));
+    _ctrl_state_sub = orb_subscribe(ORB_ID(control_state));
+    _accel_sub = orb_subscribe_multi(ORB_ID(sensor_accel), 0);
+    _vcontrol_mode_sub = orb_subscribe(ORB_ID(vehicle_control_mode));
+    _params_sub = orb_subscribe(ORB_ID(parameter_update));
+    _manual_sub = orb_subscribe(ORB_ID(manual_control_setpoint));
+    _global_pos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
+    _vehicle_status_sub = orb_subscribe(ORB_ID(vehicle_status));
+    _vehicle_land_detected_sub = orb_subscribe(ORB_ID(vehicle_land_detected));
 
-	_wake_up_slave_info_sub = orb_subscribe(ORB_ID(wake_up_slave_info));
-	_charging_info_sub = orb_subscribe(ORB_ID(charging_info));	
+    _wake_up_slave_info_sub = orb_subscribe(ORB_ID(wake_up_slave_info));
+    _charging_info_sub = orb_subscribe(ORB_ID(charging_info));
 
-	// Set l'intervale à 200Hz ( boucle de controle )
-	orb_set_interval(_ctrl_state_sub, 5);
+    // Set l'intervale à 200Hz ( boucle de controle )
+    orb_set_interval(_ctrl_state_sub, 5);
 
-	parameters_update();
+    parameters_update();
 
-	/* get an initial update for all sensor and status data */
-	vehicle_setpoint_poll();
-	vehicle_accel_poll();
-	vehicle_control_mode_poll();
-	vehicle_manual_poll();
-	vehicle_status_poll();
+    /* get an initial update for all sensor and status data */
+    vehicle_setpoint_poll();
+    vehicle_accel_poll();
+    vehicle_control_mode_poll();
+    vehicle_manual_poll();
+    vehicle_status_poll();
 
-	/* wakeup source */
-	px4_pollfd_struct_t fds[2];
+    /* wakeup source */
+    px4_pollfd_struct_t fds[2];
 
-	/* Setup of loop */
-	fds[0].fd = _params_sub;
-	fds[0].events = POLLIN;
-	fds[1].fd = _ctrl_state_sub;
-	fds[1].events = POLLIN;
+    /* Setup of loop */
+    fds[0].fd = _params_sub;
+    fds[0].events = POLLIN;
+    fds[1].fd = _ctrl_state_sub;
+    fds[1].events = POLLIN;
 
-	_task_running = true;
+    _task_running = true;
 
-	static bool mode_seq0 = false;
-	static bool mode_seq2 = false;
-	static bool mode_seq7 = false;
-	static bool mode_seq8 = false;
-	static bool mode_seq9 = false;
-	static bool mode_seq10 = false;
-	static bool mode_seq11 = false;
-	float err0 = 0.0;
+    static bool mode_seq0 = false;
+    static bool mode_seq2 = false;
+    static bool mode_seq7 = false;
+    static bool mode_seq8 = false;
+    static bool mode_seq9 = false;
+    static bool mode_seq10 = false;
+    static bool mode_seq11 = false;
+    float err0 = 0.0;
 
-	static bool flagidle = false;
+    static bool flagidle = false;
 
-	static int present_time = 0;
+    static int present_time = 0;
 
-	while (!_task_should_exit) {
+    while (!_task_should_exit) {
 
-        	static int loop_counter = 0;
-        	//static int time_count = 0;
+        static int loop_counter = 0;
+        //static int time_count = 0;
 
-	        // VARIABLES UTILES À LA MANOEUVRE DE DÉCOLLAGE
+        // VARIABLES UTILES À LA MANOEUVRE DE DÉCOLLAGE
 
-	        /*****************************************************/
-	    
-	        //static int compteur = 0;
+        /*****************************************************/
 
-	        //static bool mode_seq0 = false;
-	        //static bool mode_seq2 = false;
-	        //static bool mode_seq7 = false;
-	        //static bool mode_seq8 = false;
-	        //static bool mode_seq9 = false;
-	        //static bool mode_seq10 = false;
-	        //static bool mode_seq11 = false;
-			//float err0 = 0.0;
+        //static int compteur = 0;
 
-	        //static bool flagidle = false;
+        //static bool mode_seq0 = false;
+        //static bool mode_seq2 = false;
+        //static bool mode_seq7 = false;
+        //static bool mode_seq8 = false;
+        //static bool mode_seq9 = false;
+        //static bool mode_seq10 = false;
+        //static bool mode_seq11 = false;
+        //float err0 = 0.0;
 
-	        //static int present_time = 0;
-        
-	        /*****************************************************/
+        //static bool flagidle = false;
 
-		/* wait for up to 500ms for data */
-		int pret = px4_poll(&fds[0], (sizeof(fds) / sizeof(fds[0])), 100);
+        //static int present_time = 0;
 
-		/* timed out - periodic check for _task_should_exit, etc. */
-		if (pret == 0) {
-			continue;
-		}
+        /*****************************************************/
 
-		/* this is undesirable but not much we can do - might want to flag unhappy status */
-		if (pret < 0) {
-			warn("poll error %d, %d", pret, errno);
-			continue;
-		}
+        /* wait for up to 500ms for data */
+        int pret = px4_poll(&fds[0], (sizeof(fds) / sizeof(fds[0])), 100);
 
-		perf_begin(_loop_perf);
+        /* timed out - periodic check for _task_should_exit, etc. */
+        if (pret == 0) {
+            continue;
+        }
 
-        	// UPDATE DES PARAMETRES SI EVENT DU 200 HZ
-		/* only update parameters if they changed */
-		if (fds[0].revents & POLLIN) {
-			/* read from param to clear updated flag */
-			struct parameter_update_s update;
-			orb_copy(ORB_ID(parameter_update), _params_sub, &update);
+        /* this is undesirable but not much we can do - might want to flag unhappy status */
+        if (pret < 0) {
+            warn("poll error %d, %d", pret, errno);
+            continue;
+        }
 
-			/* update parameters from storage */
-			parameters_update();
-		}
+        perf_begin(_loop_perf);
 
-        	// LORSQUE LUPDATE DES PARAMETRE SURVIENT -> ON VA DANS LE IF
-		/* only run controller if attitude changed */
-		if (fds[1].revents & POLLIN) {
-			static uint64_t last_run = 0;
-			float deltaT = (hrt_absolute_time() - last_run) / 1000000.0f;
-			last_run = hrt_absolute_time();
+        // UPDATE DES PARAMETRES SI EVENT DU 200 HZ
+        /* only update parameters if they changed */
+        if (fds[0].revents & POLLIN) {
+            /* read from param to clear updated flag */
+            struct parameter_update_s update;
+            orb_copy(ORB_ID(parameter_update), _params_sub, &update);
+
+            /* update parameters from storage */
+            parameters_update();
+        }
+
+        // LORSQUE LUPDATE DES PARAMETRE SURVIENT -> ON VA DANS LE IF
+        /* only run controller if attitude changed */
+        if (fds[1].revents & POLLIN) {
+            static uint64_t last_run = 0;
+            float deltaT = (hrt_absolute_time() - last_run) / 1000000.0f;
+            last_run = hrt_absolute_time();
 
 
-			/* guard against too large deltaT's */
-			if (deltaT > 1.0f) {
-				deltaT = 0.01f;
-			}
+            /* guard against too large deltaT's */
+            if (deltaT > 1.0f) {
+                deltaT = 0.01f;
+            }
 
-			// uORB des control state (acc, gyro, compass, etc. qui viennent dun autre process)
-			orb_copy(ORB_ID(control_state), _ctrl_state_sub, &_ctrl_state);
+            // uORB des control state (acc, gyro, compass, etc. qui viennent dun autre process)
+            orb_copy(ORB_ID(control_state), _ctrl_state_sub, &_ctrl_state);
 
             /* get current rotation matrix and euler angles from control state quaternions */
             math::Quaternion q_att(_ctrl_state.q[0], _ctrl_state.q[1], _ctrl_state.q[2], _ctrl_state.q[3]);
@@ -1012,9 +1011,9 @@ DroneAquaTest::task_main()
 
             math::Vector<3> euler_angles;
             euler_angles = _R.to_euler();
-            _roll    = euler_angles(0);
-            _pitch   = euler_angles(1);
-            _yaw     = euler_angles(2);
+            _roll = euler_angles(0);
+            _pitch = euler_angles(1);
+            _yaw = euler_angles(2);
 
             vehicle_status_poll();
             vehicle_accel_poll();
@@ -1024,7 +1023,7 @@ DroneAquaTest::task_main()
 
             //****************************************************************************************************//
             //A FARE -> METTRE CETTE SÉQUENCE DANS UNE FONCTION APPROPRIÉE ET RENOMMER LE MODULE "AQUA_TAKE_OFF"
-            //****************************************************************************************************//    
+            //****************************************************************************************************//
 
             // CES COMMANDES DE LAVION VIENNENT DE LA MANETTE (MODE SEMI MANUEL POUR LINSTANT)
             _actuators.control[actuator_controls_s::INDEX_ROLL] = _manual.y; //0.0f + _parameters.trim_roll;
@@ -1032,112 +1031,118 @@ DroneAquaTest::task_main()
             _actuators.control[actuator_controls_s::INDEX_YAW] = _manual.r; // 0.0f + _parameters.trim_yaw
             _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z; // pass-through de la commande du trigger
 
-		// WAIT AVANT LA SEQUENCE (FALCULTATIF)
-		if(mode_seq0)
-	        {
-	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; 
-	                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;                
-	     
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_01) // 2 sec	                	
-	                {
-	                   present_time = hrt_absolute_time();
-	                   mode_seq0 = false;
-	                   mode_seq2 = true;
-	                   //flagidle = true;
-	                }
-	        }
+            // WAIT AVANT LA SEQUENCE (FALCULTATIF)
+            if (mode_seq0) {
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
+                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;
 
-	        // ACTIVE LE SERVO POUR REMONTER LE PIVOT
-	        if(mode_seq2)
-	        {
-	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;  
-	                _actuators_airframe.control[1] = _parameters.take_off_up_pos;
-	               
-	                if(hrt_absolute_time() - present_time >= 1000000) //(int)_parameters.take_off_custom_time_03) // 1 sec	                	
-	                {
-	                   present_time = hrt_absolute_time();
-	                   mode_seq2 = false;
-	                   mode_seq7 = true;
-	                }   	                    
-	        }   
+                if (hrt_absolute_time() - present_time >=
+                    (int) _parameters.take_off_custom_time_01) // 2 sec
+                {
+                    present_time = hrt_absolute_time();
+                    mode_seq0 = false;
+                    mode_seq2 = true;
+                    //flagidle = true;
+                }
+            }
 
-		// IDLE DU THRUST A 30% PENDANT UN CERTAIN TEMPS
-	        if(mode_seq7)
-	        {
+            // ACTIVE LE SERVO POUR REMONTER LE PIVOT
+            if (mode_seq2) {
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
+                _actuators_airframe.control[1] = _parameters.take_off_up_pos;
 
-					_qd.from_euler(0.0f, _parameters.take_off_custom_pitch, 0.0f);
-					_qm = q_att.conjugated();
-					_qe = _qm * _qd;
-					_euler_error = _qe.to_euler();
-					float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos)/(3.14159f/2);
+                if (hrt_absolute_time() - present_time >=
+                    1000000) //(int)_parameters.take_off_custom_time_03) // 1 sec
+                {
+                    present_time = hrt_absolute_time();
+                    mode_seq2 = false;
+                    mode_seq7 = true;
+                }
+            }
 
-	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.30f;
-	                _actuators_airframe.control[1] = _euler_error(1)*r2servo + _parameters.take_off_horizontal_pos;
+            // IDLE DU THRUST A 30% PENDANT UN CERTAIN TEMPS
+            if (mode_seq7) {
 
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_08) // 2 sec	                	
-	                {
-	                   present_time = hrt_absolute_time();
-	                   mode_seq7 = false;
-	                   mode_seq8 = true;
-	        	}
-			}
+                _qd.from_euler(0.0f, 0.0f, 0.0f);
+                _qm = q_att.conjugated();
+                _qe = q_att;
+                warn("Quaternion : %f , %f , %f , %f", (double)_qe.data[0], (double)_qe.data[1], (double)_qe.data[2], (double)_qe.data[3]);
 
-		// FULL THROTTLE PENDANT UN CERTAIN TEMPS
-	        if(mode_seq8)
-	        {
-					_qd.from_euler(0.0f, _parameters.take_off_custom_pitch, 0.0f);
-					_qm = q_att.conjugated();
-					_qe = _qm * _qd;
-					_euler_error = _qe.to_euler();
-                    float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos)/(3.14159f/2);
+                _euler_error = _qe.to_euler();
+                warn("Euler : %f , %f , %f", (double)_euler_error(0), (double)_euler_error(1), (double)_euler_error(2));
+                float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos) / (3.14159f / 2);
 
-	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
-	                _actuators_airframe.control[1] = _euler_error(1)*r2servo + _parameters.take_off_horizontal_pos;
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.30f;
+                _actuators_airframe.control[1] = _euler_error(1) * r2servo + _parameters.take_off_horizontal_pos;
 
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_09) // 120 ms	                	
-	                {
-	                   present_time = hrt_absolute_time();
-	                   mode_seq8 = false;
-	                   mode_seq8 = false;
-	                   mode_seq9 = true;
-	                }
-	        }
+                if (hrt_absolute_time() - present_time >=
+                    (int) _parameters.take_off_custom_time_08) // 2 sec
+                {
+                    present_time = hrt_absolute_time();
+                    mode_seq7 = false;
+                    mode_seq8 = true;
+                }
+            }
 
-	        // MET LA TETE DU PIVOT À LHORIZONTAL ET GARDE FULL THROTTLE
-	        if(mode_seq9)
-	        {
-					float err = _parameters.take_off_custom_pitch - _pitch;
-					float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos)/(3.14159f/2);
-					float derr = (err - err0)/dt;
-					err0 = err;
-					_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
-					_actuators_airframe.control[1] =  (_parameters.take_off_control_kp*err+_parameters.take_off_control_kd*derr)*r2servo+_parameters.take_off_horizontal_pos;
+            // FULL THROTTLE PENDANT UN CERTAIN TEMPS
+            if (mode_seq8) {
+                _qd.from_euler(0.0f, 0.0f, 0.0f);
+                _qm = q_att.conjugated();
+                _qe = q_att.conjugated();
+                _euler_error = _qe.to_euler();
+                float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos) / (3.14159f / 2);
 
-					if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_10) // Étienne 1000sec pour débugger
-	                {
-	                   present_time = hrt_absolute_time();
-	                   mode_seq9 = false;
-	                   mode_seq10 = true;
-	                }
-	        }
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
+                _actuators_airframe.control[1] = _euler_error(1) * r2servo + _parameters.take_off_horizontal_pos;
 
-	        //MAINTIENT FULL THROTTLE POUR UN CERTAIN TEMPS
-	        if(mode_seq10)
-	        {
-	                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
-	                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;
+                if (hrt_absolute_time() - present_time >=
+                    (int) _parameters.take_off_custom_time_09) // 120 ms
+                {
+                    present_time = hrt_absolute_time();
+                    mode_seq8 = false;
+                    mode_seq8 = false;
+                    mode_seq9 = true;
+                }
+            }
 
-	                //if(hrt_absolute_time() - present_time >= 2000000)//(int)_parameters.take_off_custom_time_11) // 2 sec
-	                if(hrt_absolute_time() - present_time >= (int)_parameters.take_off_custom_time_11) // 2 sec	                	
-	                {
-	                   present_time = hrt_absolute_time();
-	                   mode_seq10 = false;
-	                   mode_seq11 = true;
-	                }                
-	        }	          
+            // MET LA TETE DU PIVOT À LHORIZONTAL ET GARDE FULL THROTTLE
+            if (mode_seq9) {
+                float err = _parameters.take_off_custom_pitch - _pitch;
+                float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos) / (3.14159f / 2);
+                float derr = (err - err0) / dt;
+                err0 = err;
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
+                _actuators_airframe.control[1] =
+                        (_parameters.take_off_control_kp * err + _parameters.take_off_control_kd * derr) * r2servo +
+                        _parameters.take_off_horizontal_pos;
+                _actuators_airframe.control[1] = _parameters.take_off_down_pos;
 
-            if(mode_seq11)
-            {
+
+                if (hrt_absolute_time() - present_time >=
+                    (int) _parameters.take_off_custom_time_10) // Étienne 1000sec pour débugger
+                {
+                    present_time = hrt_absolute_time();
+                    mode_seq9 = false;
+                    mode_seq10 = true;
+                }
+            }
+
+            //MAINTIENT FULL THROTTLE POUR UN CERTAIN TEMPS
+            if (mode_seq10) {
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
+                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;
+
+                //if(hrt_absolute_time() - present_time >= 2000000)//(int)_parameters.take_off_custom_time_11) // 2 sec
+                if (hrt_absolute_time() - present_time >=
+                    (int) _parameters.take_off_custom_time_11) // 2 sec
+                {
+                    present_time = hrt_absolute_time();
+                    mode_seq10 = false;
+                    mode_seq11 = true;
+                }
+            }
+
+            if (mode_seq11) {
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z; // pass-through de la commande du trigger
                 _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f;
             }
@@ -1145,80 +1150,79 @@ DroneAquaTest::task_main()
             // COMMANDE DE ZÉRO SI VÉHICULE PAS ARMÉ
             if (_vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED) {
 
-		_actuators.control[actuator_controls_s::INDEX_THROTTLE] = _actuators.control[actuator_controls_s::INDEX_THROTTLE];
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _actuators.control[actuator_controls_s::INDEX_THROTTLE];
 
-		
-                if(flagidle == false)
-                {
-               	    flagidle = true;
+
+                if (flagidle == false) {
+                    flagidle = true;
                     present_time = hrt_absolute_time();
                     mode_seq0 = true;
-                }              
+                }
 
-	    } else {
-                	_actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; // quant nuttx boot le thrust est a 0
-                	_actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f; // le servo ne bouge pas
+            } else {
+                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f; // quant nuttx boot le thrust est a 0
+                _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f; // le servo ne bouge pas
 
-		        mode_seq0 = false;
-		        mode_seq2 = false;
-		        mode_seq7 = false;
-		        mode_seq8 = false;
-		        mode_seq9 = false;
-        		mode_seq10 = false;
-        		mode_seq11 = false;
+                mode_seq0 = false;
+                mode_seq2 = false;
+                mode_seq7 = false;
+                mode_seq8 = false;
+                mode_seq9 = false;
+                mode_seq10 = false;
+                mode_seq11 = false;
 
-                	flagidle = false;
-		}
+                flagidle = false;
+            }
 
 
             // SÉCURITÉ -> MODE MANUEL ENCLENCHÉ
-            if(_manual.kill_switch == manual_control_setpoint_s::SWITCH_POS_ON) // si en mode manuel
+            if (_manual.kill_switch == manual_control_setpoint_s::SWITCH_POS_ON) // si en mode manuel
             {
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.0f;
                 _actuators_airframe.control[1] = _parameters.take_off_horizontal_pos; //0.28f; // le servo ne bouge pas
 
-		        mode_seq0 = false;
-		        mode_seq2 = false;
-		        mode_seq7 = false;
-		        mode_seq8 = false;
-		        mode_seq9 = false;
-        		mode_seq10 = false;
-        		mode_seq11 = false;
-            }          
+                mode_seq0 = false;
+                mode_seq2 = false;
+                mode_seq7 = false;
+                mode_seq8 = false;
+                mode_seq9 = false;
+                mode_seq10 = false;
+                mode_seq11 = false;
+            }
 
-			/* lazily publish the setpoint only once available */
-			_actuators.timestamp = hrt_absolute_time();
-			_actuators.timestamp_sample = _ctrl_state.timestamp;
-			_actuators_airframe.timestamp = hrt_absolute_time();
-			_actuators_airframe.timestamp_sample = _ctrl_state.timestamp;
+            /* lazily publish the setpoint only once available */
+            _actuators.timestamp = hrt_absolute_time();
+            _actuators.timestamp_sample = _ctrl_state.timestamp;
+            _actuators_airframe.timestamp = hrt_absolute_time();
+            _actuators_airframe.timestamp_sample = _ctrl_state.timestamp;
 
-			/* publish the actuator controls */
-			if (_actuators_0_pub != nullptr) {
-				orb_publish(_actuators_id, _actuators_0_pub, &_actuators);
+            /* publish the actuator controls */
+            if (_actuators_0_pub != nullptr) {
+                orb_publish(_actuators_id, _actuators_0_pub, &_actuators);
 
-			} else if (_actuators_id) {
-				_actuators_0_pub = orb_advertise(_actuators_id, &_actuators);
-			}
+            } else if (_actuators_id) {
+                _actuators_0_pub = orb_advertise(_actuators_id, &_actuators);
+            }
 
-			if (_actuators_2_pub != nullptr) {
-				/* publish the actuator controls*/
-				orb_publish(ORB_ID(actuator_controls_2), _actuators_2_pub, &_actuators_airframe);
+            if (_actuators_2_pub != nullptr) {
+                /* publish the actuator controls*/
+                orb_publish(ORB_ID(actuator_controls_2), _actuators_2_pub, &_actuators_airframe);
 
-			} else {
-				/* advertise and publish */
-				_actuators_2_pub = orb_advertise(ORB_ID(actuator_controls_2), &_actuators_airframe);
-			}
-		}
+            } else {
+                /* advertise and publish */
+                _actuators_2_pub = orb_advertise(ORB_ID(actuator_controls_2), &_actuators_airframe);
+            }
+        }
 
-		loop_counter++;
-		perf_end(_loop_perf);
-	}
+        loop_counter++;
+        perf_end(_loop_perf);
+    }
 
-	warnx("exiting.\n");
+    warnx("exiting.\n");
 
-	_control_task = -1;
-	_task_running = false;
-	_time = 0;
+    _control_task = -1;
+    _task_running = false;
+    _time = 0;
     _counter = 0;
 }
 
