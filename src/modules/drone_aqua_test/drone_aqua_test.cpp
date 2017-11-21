@@ -1064,12 +1064,13 @@ DroneAquaTest::task_main() {
             if (mode_seq7) {
 
                 _qd.from_euler(0.0f, 0.0f, 0.0f);
-                _qm = q_att.conjugated();
-                _qe = q_att;
-                warn("Quaternion : %f , %f , %f , %f", (double)_qe.data[0], (double)_qe.data[1], (double)_qe.data[2], (double)_qe.data[3]);
+                _qm = q_att;
+                _qe = _qm * _qd.conjugated();
+
+                _euler_error_old = (q_att.conjugated() * _qd).to_euler();
 
                 _euler_error = _qe.to_euler();
-                warn("Euler : %f , %f , %f", (double)_euler_error(0), (double)_euler_error(1), (double)_euler_error(2));
+				warn("Euler error : %0.3f , %0.3f , %0.3f\tEuler : %0.3f , %0.3f , %0.3f", (double)_euler_error(0), (double)_euler_error(1), (double)_euler_error(2), (double)_euler_error_old(0), (double)_euler_error_old(1), (double)_euler_error_old(2));
                 float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos) / (3.14159f / 2);
 
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.30f;
