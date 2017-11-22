@@ -988,7 +988,9 @@ PerchingWall::hover_control(const math::Quaternion &q)
 
         // outputs[3] = ((_gain.Kp[3] * _speed_error) + (_speed_derivate * _gain.Kd[3]) + _speed_integrate * _gain.Ki[3]) + 0.6f;
 
-        outputs[3] = 0.65;
+        // ****************** //
+        outputs[3] = 0.65; // *****  Thrust constant (~ mg) pour tester LSM Thrust *****
+        // ****************** //
 
         if (outputs[3] < 0.35f){
             outputs[3] = 0.35f;
@@ -1325,13 +1327,35 @@ PerchingWall::task_main()
 
             float accX = ax*c2 + az*s2;
             float accZ = -(-ax*s2 + ay*s3*c2 + az*c2*c3 + gi);
+
+
+            // Calcul de Xc --> Pour determiner si contact entre griffes et mur
+            float Xb = 0.0f; // Distance (mm) entre le CM et le point de fixation du Belly Sensor
+            float XpBcm = 0.0f; // Distance (mm) entre le CM et le point de fixation des pattes
+            float Xp = 0.0f; // Longueur des pattes (mm)
+            float qSF = 30.0f*pi/180; // Angle entre patte et fuselage de l'avion
+
+            float anglePatte = angle2 - qSF; // Angle entre horizontale et patte
+            float c2Patte = (float)cos(anglePatte); // Cosinus de l'angle entre horizontale et patte
+            float Xc = (Xb - XpBcm)*c2 + Xp*c2Patte; // Distance horizontale reelle (mm) entre Belly Sensor et Griffes
+            float Xc_m = _distance_vl53l0x.current_distance * s2; // Distance horizontale mesuree (mm) entre Belly Sensor et Griffes
+
             //*******************************************//
+
 
 
 			// MAYBE LANDED
        // OLD - TOTAL ACCEL     if ((q_att.to_euler()(1) > 1.31f && (_wall_landing && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f)) || _mb_landed || (_recovery && (_time >= 3.0f)) ) { // || (_climb && (_time_climb >= 3.0f))) {
 
-                if ((q_att.to_euler()(1) > 1.396f && (_wall_landing && accX < -9.0f) && _time_level > 1.3f && (_manual.return_switch != manual_control_setpoint_s::SWITCH_POS_ON)) || _mb_landed || (_recovery && (_time >= 20.0f)) ) { // || (_climb && (_time_climb >= 3.0f))) {
+
+
+
+          //  if ((q_att.to_euler()(1) > 1.396f && (_distance_vl53l0x.current_distance <= 30.0f/((float)cos(q_att.to_euler()(1)))) && _time_level > 1.3f && (_manual.return_switch != manual_control_setpoint_s::SWITCH_POS_ON)) || _mb_landed || (_recovery && (_time >= 20.0f)) ) { // || (_climb && (_time_climb >= 3.0f))) {
+
+                if ((_wall_landing && Xc_m <= Xc) || _mb_landed || (_recovery && (_time >= 20.0f)) ) { // || (_climb && (_time_climb >= 3.0f))) {
+                // && _time_level > 1.3f --> Ajouter pour eviter early contact detection
+
+                //  OLD - HOR ACCEL    if ((q_att.to_euler()(1) > 1.396f && (_wall_landing && accX < -9.0f) && _time_level > 1.3f && (_manual.return_switch != manual_control_setpoint_s::SWITCH_POS_ON)) || _mb_landed || (_recovery && (_time >= 20.0f)) ) { // || (_climb && (_time_climb >= 3.0f))) {
                 //  if ((q_att.to_euler()(1) > 1.34f && ((_wall_landing && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f) || (_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 200.0f)))|| _landed || (_climb && !_climb_take_off && (_ctrl_state.x_acc*_ctrl_state.x_acc + _ctrl_state.z_acc*_ctrl_state.z_acc) > 100000.0f) || (_climb && _time_climb > 100.0f) || (_wall_landing && _manual.acro_switch == manual_control_setpoint_s::SWITCH_POS_ON) ) {
 				_wall_landing = false;
 				_recovery = false;
