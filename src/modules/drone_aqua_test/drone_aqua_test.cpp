@@ -97,7 +97,9 @@
 #include <vector>
 
 #define SENSOR_COUNT_MAX		3
-#define dt 0.005f
+#define DT 0.005f
+#define R2D 57.2957795f
+#define D2R  0.0174533f
 
 /**
  * Fixedwing attitude control app start / stop handling function
@@ -1062,19 +1064,8 @@ DroneAquaTest::task_main() {
 
             // IDLE DU THRUST A 30% PENDANT UN CERTAIN TEMPS
             if (mode_seq7) {
-
-                _qd.from_euler(0.0f, 0.0f, 0.0f);
-                _qm = q_att;
-                _qe = _qm * _qd.conjugated();
-
-                _euler_error_old = (q_att.conjugated() * _qd).to_euler();
-
-                _euler_error = _qe.to_euler();
-				warn("Euler error : %0.3f , %0.3f , %0.3f\tEuler : %0.3f , %0.3f , %0.3f", (double)_euler_error(0), (double)_euler_error(1), (double)_euler_error(2), (double)_euler_error_old(0), (double)_euler_error_old(1), (double)_euler_error_old(2));
-                float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos) / (3.14159f / 2);
-
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0.30f;
-                _actuators_airframe.control[1] = _euler_error(1) * r2servo + _parameters.take_off_horizontal_pos;
+				_actuators_airframe.control[1] = _parameters.take_off_up_pos;
 
                 if (hrt_absolute_time() - present_time >=
                     (int) _parameters.take_off_custom_time_08) // 2 sec
@@ -1087,20 +1078,29 @@ DroneAquaTest::task_main() {
 
             // FULL THROTTLE PENDANT UN CERTAIN TEMPS
             if (mode_seq8) {
-                _qd.from_euler(0.0f, 0.0f, 0.0f);
-                _qm = q_att.conjugated();
-                _qe = q_att.conjugated();
-                _euler_error = _qe.to_euler();
-                float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos) / (3.14159f / 2);
 
-                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
-                _actuators_airframe.control[1] = _euler_error(1) * r2servo + _parameters.take_off_horizontal_pos;
+				_qd.from_euler(0.0f, _parameters.take_off_custom_pitch, _yaw);
+				_qm = q_att;
+				_qe = _qm.conjugated() * _qd;
+
+				_euler_error = _qe.to_euler();
+				_derivate = (_euler_error - _euler_error_old) / DT;
+				_euler_error_old = _euler_error;
+				//warn("Error real : %0.3f , %0.3f , %0.3f", (double)(_euler_error(0)*R2D), (double)(_euler_error(1)*R2D), (double)(_euler_error(2)*R2D));
+				float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos) / (3.14159f / 2);
+                float throttleFunction = 0.30f + _parameters.take_off_custom_time_10*(hrt_absolute_time() - present_time)/1000000.0f;
+                if (throttleFunction < 1) {
+                    _actuators.control[actuator_controls_s::INDEX_THROTTLE] = throttleFunction;
+                }
+                else {
+                    _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
+                }
+                _actuators_airframe.control[1] = (_parameters.take_off_control_kp*_euler_error(1)+_parameters.take_off_control_kd*_derivate(1)) * r2servo + _parameters.take_off_horizontal_pos;
 
                 if (hrt_absolute_time() - present_time >=
                     (int) _parameters.take_off_custom_time_09) // 120 ms
                 {
                     present_time = hrt_absolute_time();
-                    mode_seq8 = false;
                     mode_seq8 = false;
                     mode_seq9 = true;
                 }
@@ -1110,7 +1110,7 @@ DroneAquaTest::task_main() {
             if (mode_seq9) {
                 float err = _parameters.take_off_custom_pitch - _pitch;
                 float r2servo = (_parameters.take_off_up_pos - _parameters.take_off_horizontal_pos) / (3.14159f / 2);
-                float derr = (err - err0) / dt;
+                float derr = (err - err0) / DT;
                 err0 = err;
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 1.0f;
                 _actuators_airframe.control[1] =
