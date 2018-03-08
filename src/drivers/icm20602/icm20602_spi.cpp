@@ -62,7 +62,7 @@
 #define DIR_READ			0x80
 #define DIR_WRITE			0x00
 
-#if defined(PX4_SPIDEV_ICM_20689)
+#if defined(PX4_SPIDEV_ICM20602)
 #  ifdef PX4_SPI_BUS_EXT
 #    define EXTERNAL_BUS PX4_SPI_BUS_EXT
 #  else
@@ -115,7 +115,7 @@ ICM20602_SPI_interface(int bus, bool external_bus)
 	if (external_bus) {
 		cs = PX4_SPIDEV_ICM_20602_EXT;
 	} else {
-		cs = PX4_SPIDEV_ICM_20689;
+		cs = PX4_SPIDEV_ICM20602;
 	}
 
 	if (cs != SPIDEV_NONE) {

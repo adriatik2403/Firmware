@@ -51,9 +51,12 @@ set(config_module_list
 	drivers/bst
 	#drivers/snapdragon_rc_pwm
 	drivers/lis3mdl
-	#drivers/iridiumsbd
+	drivers/iridiumsbd
 	drivers/ulanding
-	drivers/vl53l0x
+	#drivers/vl53l0x
+    drivers/run_cam
+	drivers/icm20602
+	drivers/lps33
 
 	#
 	# System commands
