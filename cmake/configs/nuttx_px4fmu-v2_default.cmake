@@ -57,6 +57,8 @@ set(config_module_list
     drivers/run_cam
 	drivers/icm20602
 	drivers/lps33
+	drivers/charging_i2c
+	drivers/wake_up_i2c_slave
 
 	#
 	# System commands
