@@ -397,8 +397,8 @@ Sensors::diff_pres_poll(struct sensor_combined_s &raw)
 		_airspeed.air_temperature_celsius = air_temperature_celsius;
 		_airspeed.differential_pressure_filtered_pa = _diff_pres.differential_pressure_filtered_pa;
 
-		int instance;
-		orb_publish_auto(ORB_ID(airspeed), &_airspeed_pub, &_airspeed, &instance, ORB_PRIO_DEFAULT);
+		//int instance;
+		//orb_publish_auto(ORB_ID(airspeed), &_airspeed_pub, &_airspeed, &instance, ORB_PRIO_DEFAULT);
 	}
 }
 
@@ -514,9 +514,9 @@ Sensors::adc_poll(struct sensor_combined_s &raw)
 								(diff_pres_pa_raw * 0.1f);
 						_diff_pres.temperature = -1000.0f;
 
-						int instance;
-						orb_publish_auto(ORB_ID(differential_pressure), &_diff_pres_pub, &_diff_pres, &instance,
-								 ORB_PRIO_DEFAULT);
+						//int instance;
+						//orb_publish_auto(ORB_ID(differential_pressure), &_diff_pres_pub, &_diff_pres, &instance,
+						//		 ORB_PRIO_DEFAULT);
 					}
 
 #endif
@@ -529,8 +529,8 @@ Sensors::adc_poll(struct sensor_combined_s &raw)
 				_battery.updateBatteryStatus(t, bat_voltage_v, bat_current_a, ctrl.control[actuator_controls_s::INDEX_THROTTLE],
 							     _armed, &_battery_status);
 
-				int instance;
-				orb_publish_auto(ORB_ID(battery_status), &_battery_pub, &_battery_status, &instance, ORB_PRIO_DEFAULT);
+				//int instance;
+				//orb_publish_auto(ORB_ID(battery_status), &_battery_pub, &_battery_status, &instance, ORB_PRIO_DEFAULT);
 			}
 
 			_last_adc = t;

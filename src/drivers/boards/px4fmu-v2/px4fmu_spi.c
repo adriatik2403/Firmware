@@ -275,8 +275,8 @@ __EXPORT void board_spi_reset(int ms)
 	stm32_gpiowrite(GPIO_EXTI_MPU_DRDY_OFF, 0);
 
 	/* set the sensor rail off */
-	stm32_configgpio(GPIO_VDD_3V3_SENSORS_EN);
-	stm32_gpiowrite(GPIO_VDD_3V3_SENSORS_EN, 0);
+	//stm32_configgpio(GPIO_VDD_3V3_SENSORS_EN);
+	//stm32_gpiowrite(GPIO_VDD_3V3_SENSORS_EN, 0);
 
 	/* wait for the sensor rail to reach GND */
 	usleep(ms * 1000);
@@ -285,7 +285,7 @@ __EXPORT void board_spi_reset(int ms)
 	/* re-enable power */
 
 	/* switch the sensor rail back on */
-	stm32_gpiowrite(GPIO_VDD_3V3_SENSORS_EN, 1);
+	//stm32_gpiowrite(GPIO_VDD_3V3_SENSORS_EN, 1);
 
 	/* wait a bit before starting SPI, different times didn't influence results */
 	usleep(100);
