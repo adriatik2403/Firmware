@@ -36,12 +36,16 @@ else
 		fi
 
 		# External SPI
-		if ms5611 -S start
-		then
-		fi
+		#if ms5611 -S start
+		#then
+		#fi
 
 		# Internal SPI
-		if ms5611 -s start
+		#if ms5611 -s start
+		#then
+		#fi
+
+		if lps33 start
 		then
 		fi
 

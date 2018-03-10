@@ -21,12 +21,12 @@ set(config_module_list
 	drivers/charging_i2c
 	drivers/wake_up_i2c_slave
 	drivers/rgbled
-	drivers/mpu6000
+	#drivers/mpu6000
 	drivers/mpu9250
 	drivers/lsm303d
 	drivers/l3gd20
-	drivers/hmc5883
-	drivers/ms5611
+	#drivers/hmc5883
+	#drivers/ms5611
 	#drivers/mb12xx
 	#drivers/srf02
 	drivers/sf0x
@@ -53,8 +53,11 @@ set(config_module_list
 	drivers/bst
 	#drivers/snapdragon_rc_pwm
 	drivers/lis3mdl
-	#drivers/iridiumsbd
+	drivers/iridiumsbd
 	drivers/ulanding
+	drivers/run_cam
+	drivers/icm20602
+	drivers/lps33
 
 	#
 	# System commands
