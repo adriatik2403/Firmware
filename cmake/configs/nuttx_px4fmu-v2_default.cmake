@@ -21,7 +21,7 @@ set(config_module_list
 	drivers/charging_i2c
 	drivers/wake_up_i2c_slave
 	drivers/rgbled
-	#drivers/mpu6000
+	drivers/mpu6000
 	drivers/mpu9250
 	#drivers/lsm303d
 	#drivers/l3gd20
