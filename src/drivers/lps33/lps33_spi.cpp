@@ -114,7 +114,7 @@ LPS33_SPI_interface(int bus) //bool external bus
     return interface;
     */
 
-        return new LPS33_SPI(bus, (spi_dev_e)PX4_SPIDEV_EXT0);
+        return new LPS33_SPI(bus, (spi_dev_e)PX4_SPIDEV_EXT1);
 
 }
 
