@@ -205,8 +205,7 @@ rcsplit_ctrl_argument_e rc_split_cmd(char *cmd){
     /*
     * RCSPLIT_CTRL_ARGU_POWER_BTN = 0x2,
     */
-    if (!strcmp(cmd, "power") ||
-        !strcmp(cmd, "start") ||
+    if (!strcmp(cmd, "start") ||
         !strcmp(cmd, "stop") ||
         !strcmp(cmd, "snap")) {
         return RCSPLIT_CTRL_ARGU_POWER_BTN;
@@ -235,9 +234,9 @@ run_cam mode
 int run_cam_main(int argc, char *argv[])
 {
     // set BR = 115200
-    printf("(who | wifi | power | start | stop | snap | mode)");
+    printf("(who | wifi | start | stop | snap | mode)");
     // input handling
-	char *uart_name = "/dev/ttyS3";
+	char *uart_name = "/dev/ttyS6";
     rcsplit_ctrl_argument_e split_cmd = RCSPLIT_CTRL_ARGU_WHO_ARE_YOU;
 
 	if (argc > 2) { 
