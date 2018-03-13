@@ -25,7 +25,7 @@ set(config_module_list
 	drivers/mpu9250
 	#drivers/lsm303d
 	#drivers/l3gd20
-	#drivers/hmc5883
+	drivers/hmc5883
 	#drivers/ms5611
 	#drivers/mb12xx
 	#drivers/srf02
