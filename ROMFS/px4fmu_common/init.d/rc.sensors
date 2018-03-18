@@ -58,7 +58,7 @@ else
         fi
 
         # Possible external compasses
-        if hmc5883 -C -T -I start
+        if hmc5883 -C start
         then
         fi
 
