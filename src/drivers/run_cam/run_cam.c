@@ -54,6 +54,10 @@ typedef enum {
     RCSPLIT_STATE_UNKNOWN = 0,
     RCSPLIT_STATE_INITIALIZING,
     RCSPLIT_STATE_IS_READY,
+    RCSPLIT_STATE_VIDEO_STOPPED,
+    RCSPLIT_STATE_VIDEO_STARTED,
+    RCSPLIT_STATE_PHOTO,
+    RCSPLIT_STATE_SETUP,
 } rcsplitState_e;
 
 // the commands of RunCam Split serial protocol
@@ -72,9 +76,10 @@ uint8_t                 crc_high_first      (uint8_t *ptr, uint8_t len);
 rcsplit_ctrl_argument_e rc_split_cmd        (char *cmd);
 int                     enable_flow_control (bool enabled,int _uart_fd);
 int                     set_baud            (int _uart_fd, char *_device);
+int                     RunCamStadeMachin   (char* uart_name, char* cmd);
 
 // communicate with camera device variables
-rcsplitState_e cameraState = RCSPLIT_STATE_UNKNOWN;
+rcsplitState_e oldState = RCSPLIT_STATE_VIDEO_STARTED;
 
 
 uint8_t crc_high_first(uint8_t *ptr, uint8_t len)
@@ -91,6 +96,88 @@ uint8_t crc_high_first(uint8_t *ptr, uint8_t len)
         }
     }
     return (crc);
+}
+
+int RunCamStadeMachin(char* uart_name, char* cmd){
+
+    rcsplit_ctrl_argument_e split_cmd = RCSPLIT_CTRL_ARGU_WHO_ARE_YOU;
+    rcsplitState_e newState = oldState;
+
+    int test_uart = rcSplitInit(uart_name);
+
+    if (test_uart < 0) {
+        printf("ERROR opening UART %s, aborting..\n", uart_name);
+    }
+
+    if (!strcmp(cmd, "record")){
+        newState = RCSPLIT_STATE_VIDEO_STARTED;
+        printf("cmd:record\n");
+    }else if(!strcmp(cmd, "stop")){
+        newState = RCSPLIT_STATE_VIDEO_STOPPED;
+        printf("cmd:stop\n");
+    }else if(!strcmp(cmd, "snap")){
+        newState = RCSPLIT_STATE_PHOTO;
+        printf("cmd:snap\n");
+    }
+
+
+    if(newState == RCSPLIT_STATE_VIDEO_STOPPED && oldState == RCSPLIT_STATE_VIDEO_STARTED){
+        split_cmd = RCSPLIT_CTRL_ARGU_POWER_BTN;
+        sendCtrlCommand(test_uart,split_cmd);
+    }else if(newState == RCSPLIT_STATE_PHOTO && oldState == RCSPLIT_STATE_VIDEO_STARTED){
+        split_cmd = RCSPLIT_CTRL_ARGU_POWER_BTN;
+        sendCtrlCommand(test_uart,split_cmd);
+        split_cmd = RCSPLIT_CTRL_ARGU_CHANGE_MODE;
+        sendCtrlCommand(test_uart,split_cmd);
+
+        //split_cmd = RCSPLIT_CTRL_ARGU_POWER_BTN;
+        //sendCtrlCommand(test_uart,split_cmd);
+    }else if(newState == RCSPLIT_STATE_VIDEO_STARTED && oldState == RCSPLIT_STATE_VIDEO_STOPPED){
+        split_cmd = RCSPLIT_CTRL_ARGU_POWER_BTN;
+        sendCtrlCommand(test_uart,split_cmd);
+    }else if(newState == RCSPLIT_STATE_PHOTO && oldState == RCSPLIT_STATE_VIDEO_STOPPED){
+        split_cmd = RCSPLIT_CTRL_ARGU_CHANGE_MODE;
+        sendCtrlCommand(test_uart,split_cmd);
+
+        //split_cmd = RCSPLIT_CTRL_ARGU_POWER_BTN;
+        //sendCtrlCommand(test_uart,split_cmd);
+    }else if(newState == RCSPLIT_STATE_VIDEO_STARTED && oldState == RCSPLIT_STATE_PHOTO){
+        split_cmd = RCSPLIT_CTRL_ARGU_CHANGE_MODE;
+        sendCtrlCommand(test_uart,split_cmd);
+        split_cmd = RCSPLIT_CTRL_ARGU_CHANGE_MODE;
+        sendCtrlCommand(test_uart,split_cmd);
+        split_cmd = RCSPLIT_CTRL_ARGU_POWER_BTN;
+        sendCtrlCommand(test_uart,split_cmd);
+    }else if(newState == RCSPLIT_STATE_VIDEO_STOPPED && oldState == RCSPLIT_STATE_PHOTO){
+        split_cmd = RCSPLIT_CTRL_ARGU_CHANGE_MODE;
+        sendCtrlCommand(test_uart,split_cmd);
+        split_cmd = RCSPLIT_CTRL_ARGU_CHANGE_MODE;
+        sendCtrlCommand(test_uart,split_cmd);
+    }else if(newState == RCSPLIT_STATE_PHOTO && oldState == RCSPLIT_STATE_PHOTO){
+        split_cmd = RCSPLIT_CTRL_ARGU_POWER_BTN;
+        sendCtrlCommand(test_uart,split_cmd);
+    }else{
+        if (!strcmp(cmd, "wifi")) {
+            sendCtrlCommand(test_uart,RCSPLIT_CTRL_ARGU_WIFI_BTN);
+        }else if (!strcmp(cmd, "mode")) {
+            sendCtrlCommand(test_uart,RCSPLIT_CTRL_ARGU_CHANGE_MODE);
+        }else if (!strcmp(cmd, "who")) {
+            sendCtrlCommand(test_uart,RCSPLIT_CTRL_ARGU_WHO_ARE_YOU);
+        }
+
+    }
+
+    oldState = newState;
+
+    if(newState == RCSPLIT_STATE_PHOTO){
+        printf("State: SNAP\n");
+    }else if(newState == RCSPLIT_STATE_VIDEO_STOPPED){
+        printf("State: STOPPED\n");
+    }else if(newState == RCSPLIT_STATE_VIDEO_STARTED){
+        printf("State: STARTED\n");
+    }
+
+    return test_uart;
 }
 
 
@@ -112,8 +199,17 @@ void sendCtrlCommand(int port,rcsplit_ctrl_argument_e argument)
     uart_buffer[3] = crc;
     uart_buffer[4] = RCSPLIT_PACKET_TAIL;
 
+
+    if(argument == RCSPLIT_CTRL_ARGU_CHANGE_MODE){
+        printf("commande envoye: MODE\n");
+    }else if(argument == RCSPLIT_CTRL_ARGU_POWER_BTN){
+        printf("commande envoye: POWER\n");
+    }
+
     // write to device
     write(port, uart_buffer, 5);
+
+    sleep(5);
 }
 
 
@@ -135,7 +231,7 @@ int rcSplitInit(char *uart_name)
         return _uart_fd;
     }
 
-    cameraState = RCSPLIT_STATE_IS_READY;
+    //cameraState = RCSPLIT_STATE_IS_READY;
 
     return _uart_fd;
 }
@@ -205,25 +301,23 @@ rcsplit_ctrl_argument_e rc_split_cmd(char *cmd){
     /*
     * RCSPLIT_CTRL_ARGU_POWER_BTN = 0x2,
     */
-    if (!strcmp(cmd, "start") ||
+    if (!strcmp(cmd, "record") ||
         !strcmp(cmd, "stop") ||
-        !strcmp(cmd, "snap")) {
+        !strcmp(cmd, "snap") ||
+        !strcmp(cmd, "power")) {
         return RCSPLIT_CTRL_ARGU_POWER_BTN;
     }
-    /*
-    * RCSPLIT_CTRL_ARGU_CHANGE_MODE = 0x3,
-    */
+
     if (!strcmp(cmd, "mode")) {
         return RCSPLIT_CTRL_ARGU_CHANGE_MODE;
     }
-    /*
-    * RCSPLIT_CTRL_ARGU_WHO_ARE_YOU = 0xFF,
-    */
+
     if (!strcmp(cmd, "who")) {
         return RCSPLIT_CTRL_ARGU_WHO_ARE_YOU;
     }
     return RCSPLIT_CTRL_ARGU_WHO_ARE_YOU;
 }
+
 /*
 run_cam who
 run_cam wifi
@@ -234,35 +328,16 @@ run_cam mode
 int run_cam_main(int argc, char *argv[])
 {
     // set BR = 115200
-    printf("(who | wifi | start | stop | snap | mode)");
+    printf("(who | wifi | record | stop | snap | mode)");
     // input handling
 	char *uart_name = "/dev/ttyS6";
-    rcsplit_ctrl_argument_e split_cmd = RCSPLIT_CTRL_ARGU_WHO_ARE_YOU;
 
 	if (argc > 2) { 
-        split_cmd = rc_split_cmd(argv[1]);
-        uart_name = argv[2]; 
-    }else if(argc > 1){ 
-        split_cmd = rc_split_cmd(argv[1]);
-    }  
+        //split_cmd = rc_split_cmd(argv[1]);
+        uart_name = argv[2];
+    }
 
-
-	int test_uart = rcSplitInit(uart_name);
-
-	if (test_uart < 0) {
-		return test_uart;
-	}
-
-	uint64_t start_time = hrt_absolute_time();
-
-
-    sendCtrlCommand(test_uart,split_cmd);
-    //usleep(1000);
-
-
-	int interval = hrt_absolute_time() - start_time;
-
-	printf("%d ms on UART %s\n", interval / 1000, uart_name);
+    int test_uart = RunCamStadeMachin(uart_name,argv[1]);
 
 	close(test_uart);
 
