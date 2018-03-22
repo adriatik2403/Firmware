@@ -124,9 +124,11 @@ int RunCamStadeMachin(char* uart_name, char* cmd){
     if(newState == RCSPLIT_STATE_VIDEO_STOPPED && oldState == RCSPLIT_STATE_VIDEO_STARTED){
         split_cmd = RCSPLIT_CTRL_ARGU_POWER_BTN;
         sendCtrlCommand(test_uart,split_cmd);
+        sleep(5);
     }else if(newState == RCSPLIT_STATE_PHOTO && oldState == RCSPLIT_STATE_VIDEO_STARTED){
         split_cmd = RCSPLIT_CTRL_ARGU_POWER_BTN;
         sendCtrlCommand(test_uart,split_cmd);
+        sleep(5);
         split_cmd = RCSPLIT_CTRL_ARGU_CHANGE_MODE;
         sendCtrlCommand(test_uart,split_cmd);
 
@@ -209,7 +211,7 @@ void sendCtrlCommand(int port,rcsplit_ctrl_argument_e argument)
     // write to device
     write(port, uart_buffer, 5);
 
-    sleep(5);
+    sleep(1);
 }
 
 

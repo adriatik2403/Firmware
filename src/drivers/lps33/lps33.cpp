@@ -566,11 +566,12 @@ LPS33::cycle()
 int
 LPS33::measure()
 {
+    /*
     int ret;
 
-    /*
-     * Send the command to begin a temperature measurement.
-     */
+
+    //Send the command to begin a temperature measurement.
+
     uint8_t pressoutLSB;
     ret = read_reg(PRESS_OUT_XL,pressoutLSB);
     if (OK != ret) {
@@ -592,8 +593,8 @@ LPS33::measure()
     //uint32_t scaling_factor = 4096;
     //uint32_t PRESSOUT = (pressoutMSB<<16) | (pressoutMID<<8) | pressoutLSB;
     //uint32_t pression = PRESSOUT/scaling_factor;
-
-    return ret;
+    */
+    return OK;
 }
 
 int
