@@ -498,6 +498,7 @@ LPS33::reset()
     // Reset
     ret = write_reg(CTRL_REG2, CTRL_REG2_BOOT | CTRL_REG2_SWRESET);
 
+
     usleep(5000);
     warnx("LPS33 RESET DONE");
     return ret;
@@ -945,6 +946,10 @@ test(enum LPS33_BUS busid)
         warnx("altitude:    %11.4f", (double)report.altitude);
         warnx("temperature K: %8.4f", (double)report.temperature);
         warnx("time:        %lld", report.timestamp);
+    }
+
+    if (ioctl(fd, SENSORIOCSPOLLRATE, SENSOR_POLLRATE_DEFAULT) < 0) {
+        err(1, "driver poll restart failed");
     }
 
     close(fd);

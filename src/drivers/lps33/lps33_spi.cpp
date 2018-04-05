@@ -157,9 +157,9 @@ LPS33_SPI::init()
         return -EIO;
     }
     */
-    
+
     // write Ctrl_Reg_1 value
-    uint8_t tempData = 0b01000010;
+    uint8_t tempData = 0b00110000;
     if (write(CTRL_REG1, &tempData, 2)) {
         DEVICE_DEBUG("read_reg fail");
         return -EIO;
@@ -173,7 +173,7 @@ LPS33_SPI::init()
     }
 
     // AUTOZERO
-    uint8_t tempData2 = 0b00100000;
+    uint8_t tempData2 = 0b00000000;
     if (write(INTERRUPT_CFG, &tempData2, 2)) {
         DEVICE_DEBUG("read_reg fail");
         return -EIO;

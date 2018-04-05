@@ -49,7 +49,7 @@ else
 		then
 		fi
 
-		if mpu9250 -s -R 14 start
+		if mpu9250 -s -R 10 start
         then
         fi
 
