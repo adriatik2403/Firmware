@@ -142,7 +142,7 @@ LPS33_SPI::init()
     
     warnx("LPS33_SPI INITIALIZATION BEGIN");
     
-    /*
+
     // read WHO_AM_I value
     uint8_t id;
     if (read(WHO_AM_I, &id, 1)) {
@@ -156,25 +156,24 @@ LPS33_SPI::init()
         DEVICE_DEBUG("ID byte mismatch (%02x != %02x)", ID_WHO_AM_I, id);
         return -EIO;
     }
-    */
-
+    
     // write Ctrl_Reg_1 value
-    uint8_t tempData = 0b00110000;
-    if (write(CTRL_REG1, &tempData, 2)) {
+    uint8_t tempData = 0b01000000;
+    if (write(CTRL_REG1, &tempData, 1)) {
         DEVICE_DEBUG("read_reg fail");
         return -EIO;
     }
 
     // write Ctrl_Reg_2 value
     uint8_t tempData1 = 0b00000000;
-    if (write(CTRL_REG2, &tempData1, 2)) {
+    if (write(CTRL_REG2, &tempData1, 1)) {
         DEVICE_DEBUG("read_reg fail");
         return -EIO;
     }
 
     // AUTOZERO
     uint8_t tempData2 = 0b00000000;
-    if (write(INTERRUPT_CFG, &tempData2, 2)) {
+    if (write(INTERRUPT_CFG, &tempData2, 1)) {
         DEVICE_DEBUG("read_reg fail");
         return -EIO;
     }

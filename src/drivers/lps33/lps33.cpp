@@ -396,6 +396,7 @@ LPS33::ioctl(struct file *filp, int cmd, unsigned long arg)
 
             /* adjust to a legal polling interval in Hz */
             default: {
+
                     /* do we need to start internal polling? */
                     bool want_start = (_measure_ticks == 0);
 
@@ -685,7 +686,6 @@ LPS33::collect()
 
     /* Pressure and MSL in mBar */
     double p = raw / 4096.0;
-    /* DANGER POT A MODIFIER CECI */
     double msl = 101325 / 100.0;
 
     double alt = (1.0 - pow(p / msl, 0.190263)) * 44330.8;
@@ -855,7 +855,8 @@ start(enum LPS33_BUS busid)
 		}
 
         started |= start_bus(bus_options[i]);
-	}
+
+    }
 
 	if (!started) {
 		exit(1);
