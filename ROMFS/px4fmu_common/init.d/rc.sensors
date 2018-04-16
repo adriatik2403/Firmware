@@ -49,11 +49,11 @@ else
 		then
 		fi
 
-		if mpu9250 -s -R 10 start
+		if mpu9250 -s -R 0 start
         then
         fi
 
-        if icm20602 -s -R 12 start
+        if icm20602 -s -R 6 start
         then
         fi
 
