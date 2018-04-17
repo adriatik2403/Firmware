@@ -679,7 +679,10 @@ WAKE_UP_I2C_SLAVE::collect()
 
 	if((int)_parameters.test_dodo == 1 && flag_dodo == 0)
 	{
+
 		flag_dodo = 1;
+		_parameters.test_dodo = 0.0f;
+		param_set(_parameter_handles.test_dodo,&_parameters.test_dodo);
 
 		temps_dodo_MSB_01 = (uint8_t)(((uint32_t)_parameters.nb_sec_dodo / 16777216) & 0x000000FF); // shift a droite de 24 bit
 		temps_dodo_MSB_02 = (uint8_t)(((uint32_t)_parameters.nb_sec_dodo / 65536) & 0x000000FF); // shift a droite de 24 bit
