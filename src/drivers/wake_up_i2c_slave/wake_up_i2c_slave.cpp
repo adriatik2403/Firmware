@@ -129,6 +129,7 @@ public:
 	* Diagnostics - print some basic information about the driver.
 	*/
 	void				print_info();
+    void                transferI2C(const uint8_t* sendData,uint8_t sendDataSize, uint8_t* receivedData, uint8_t receivedDataSize);
 
 protected:
 	virtual int			probe();
@@ -886,6 +887,13 @@ WAKE_UP_I2C_SLAVE::print_info()
 	_reports->print_info("report queue");
 }
 
+void
+WAKE_UP_I2C_SLAVE::transferI2C(const uint8_t* sendData,uint8_t sendDataSize, uint8_t* receivedData, uint8_t receivedDataSize)
+{
+    transfer(sendData,sendDataSize,receivedData,receivedDataSize);
+}
+
+
 /**
  * Local functions in support of the shell command
  * Pour appeler les fonctions on écrit:
@@ -905,6 +913,7 @@ void	stop();
 void	test();
 void	reset();
 void	info();
+void    sleep(uint32_t time);
 
 /**
  * Start the driver.
@@ -1109,6 +1118,29 @@ info()
 	exit(0);
 }
 
+void
+sleep(uint32_t time)
+{
+    uint8_t temps_dodo_MSB_01 = 0;
+    uint8_t temps_dodo_MSB_02 = 0;
+    uint8_t temps_dodo_LSB_01 = 0;
+    uint8_t temps_dodo_LSB_02 = 0;
+
+    temps_dodo_MSB_01 = (uint8_t)((time / 16777216) & 0x000000FF); // shift a droite de 24 bit
+    temps_dodo_MSB_02 = (uint8_t)((time / 65536) & 0x000000FF); // shift a droite de 24 bit
+    temps_dodo_LSB_01 = (uint8_t)((time / 256) & 0x000000FF); // shift a droite de 24 bit
+    temps_dodo_LSB_02 = (uint8_t)((time / 1) & 0x000000FF); // shift a droite de 24 bit
+
+    /* read from the sensor */
+    uint8_t test1[5] = {0x31,temps_dodo_MSB_01,temps_dodo_MSB_02,temps_dodo_LSB_01,temps_dodo_LSB_02};
+
+
+    g_dev->transferI2C(test1, 5, nullptr, 0); // envoie l'adresse du registre à configurer
+
+    exit(0);
+
+}
+
 } /* namespace */
 
 int
@@ -1135,6 +1167,10 @@ wake_up_i2c_slave_main(int argc, char *argv[])
 		wake_up_i2c_slave::test();
 	}
 
+    if (!strcmp(argv[1], "sleep")) {
+        wake_up_i2c_slave::sleep(atoi(argv[2]));
+    }
+
 	/*
 	 * Reset the driver.
 	 */
@@ -1149,5 +1185,5 @@ wake_up_i2c_slave_main(int argc, char *argv[])
 		wake_up_i2c_slave::info();
 	}
 
-	errx(1, "unrecognized command, try 'start', 'test', 'reset' or 'info'");
+	errx(1, "unrecognized command, try 'start', 'test', 'reset', 'sleep' or 'info'");
 }
