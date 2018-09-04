@@ -586,8 +586,8 @@ CHARGING_I2C::collect()
 	/////////////////////////////////////////////////////////////////////////////////////////
 	else if((int)(_parameters.is_new_bat) == 1)
 	{
-        errx("NVconfig CONFIRMED! Proceeding to config in 10 seconds.");
-        errx("If this is not wanted, cut the power NOW !");
+        errx(1,"NVconfig CONFIRMED! Proceeding to config in 10 seconds.");
+        errx(1,"If this is not wanted, cut the power NOW !");
         usleep(10000000); //Sleep for 10 seconds
 
 		// on met ladresse pour faire un read des parametres (0x16 selon la chip -> 0x0B selon la nomenclature du driver)
