@@ -1,35 +1,3 @@
-/****************************************************************************
- *
- *   Copyright (c) 2015, 2016 Airmind Development Team. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name Airmind nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- ****************************************************************************/
 
 /**
  * @file charging_i2c.cpp
@@ -79,30 +47,10 @@
 #include <board_config.h>
 
 /* Configuration Constants */
-
-// JASSUME QUE CEST LI2C SUR LE CONECTEUR EXTERNE: À VALIDER !!!
-#define SRF02_I2C_BUS 		PX4_I2C_BUS_ONBOARD
-
-// LADRESSE -> VALIDER CE QUE LON VEUT
-#define SRF02_I2C_BASEADDR 	0x36 /* vaut 0x6C selon la convention du chip de balancing. ladresse est tassé vers la droite et le dernier bit est sous-entendu */
-
-// LADRESSE -> PATH DU DEVICE DANS LOS NuttX ??? (PAS CERTAIN)
-#define SRF02_DEVICE_PATH	"/dev/charging_i2c"
-
-/* MB12xx Registers addresses */
-
-#define SRF02_TAKE_RANGE_REG	0x51		/* Measure range Register */
-#define SRF02_SET_ADDRESS_0	0xA0		/* Change address 0 Register */
-#define SRF02_SET_ADDRESS_1	0xAA		/* Change address 1 Register */
-#define SRF02_SET_ADDRESS_2	0xA5		/* Change address 2 Rsrf02egister */
-
-/* Device limits */
-#define SRF02_MIN_DISTANCE 	(0.20f)
-#define SRF02_MAX_DISTANCE 	(6.00f)
-
-// le timing entre chaque mesure est 60 ms. la collecte automatique a cette frequence
-// est partie dans la fonction ioctl
-#define SRF02_CONVERSION_INTERVAL 	100000 /* 60ms for one sonar */
+#define MAX17205_I2C_BUS 		PX4_I2C_BUS_ONBOARD
+#define MAX17205_I2C_BASEADDR 	0x36 /* vaut 0x6C selon la convention du chip de balancing. ladresse est tassé vers la droite et le dernier bit est sous-entendu */
+#define MAX17205_DEVICE_PATH	"/dev/charging_i2c"
+#define MAX17205_CONVERSION_INTERVAL 	100000 /* 60ms for one sonar */
 #define TICKS_BETWEEN_SUCCESIVE_FIRES 	100000 /* 30ms between each sonar measurement (watch out for interference!) */
 
 #ifndef CONFIG_SCHED_WORKQUEUE
@@ -112,52 +60,32 @@
 class CHARGING_I2C : public device::I2C
 {
 public:
-	CHARGING_I2C(int bus = SRF02_I2C_BUS, int address = SRF02_I2C_BASEADDR);
-	// la declaration de la fonction definit deja le BUS et lADRESS
-
+	CHARGING_I2C(int bus = MAX17205_I2C_BUS, int address = MAX17205_I2C_BASEADDR);
 	virtual ~CHARGING_I2C();
-
 	virtual int 		init();
-
 	virtual ssize_t		read(struct file *filp, char *buffer, size_t buflen);
 	virtual int			ioctl(struct file *filp, int cmd, unsigned long arg);
-
-	/**
-	* Diagnostics - print some basic information about the driver.
-	*/
 	void				print_info();
 
 protected:
 	virtual int			probe();
 
 private:
-
-	///////////////////////////////////////////////////////////////////////////////////
-	// TEST: UNE COPY LOCALE DE PARAMETRES CUSTOM POUR LE DRIVER CHARGING_I2C
-
 	
 	struct {
-
 		float is_new_bat;
 		float bat_cap;
 		float rsense;
 		float balance_threshold;
-
 	}	_parameters;			
-	
 
 	struct {
-
         param_t is_new_bat;
         param_t bat_cap;
         param_t rsense;
         param_t balance_threshold;
-
 	}	_parameter_handles;		/**< handles for interesting parameters */
-	///////////////////////////////////////////////////////////////////////////////////
 
-	float				_min_distance;
-	float				_max_distance;
 	work_s				_work;
 	ringbuffer::RingBuffer		*_reports;
 	bool				_sensor_ok;
@@ -181,8 +109,6 @@ private:
 	int				_cycling_rate;	/* */
 	uint8_t				_index_counter;	/* temporary sonar i2c address */
 	std::vector<uint8_t>	addr_ind; 	/* temp sonar i2c address vector */
-	std::vector<float>
-	_latest_sonar_measurements; /* vector to store latest sonar measurements in before writing to report */
 
 	/**
 	 * Update our local parameter cache.
@@ -213,16 +139,6 @@ private:
 	void				stop();
 
 	/**
-	* Set the min and max distance thresholds if you want the end points of the sensors
-	* range to be brought in at all, otherwise it will use the defaults SRF02_MIN_DISTANCE
-	* and SRF02_MAX_DISTANCE
-	*/
-	void				set_minimum_distance(float min);
-	void				set_maximum_distance(float max);
-	float				get_minimum_distance();
-	float				get_maximum_distance();
-
-	/**
 	* Perform a poll cycle; collect from the previous measurement
 	* and start a new one.
 	*/
@@ -246,10 +162,8 @@ private:
 extern "C" { __EXPORT int charging_i2c_main(int argc, char *argv[]);}
 
 CHARGING_I2C::CHARGING_I2C(int bus, int address) :
-	I2C("MB12xx", SRF02_DEVICE_PATH, bus, address, 100000), // _address est private on appelle donc le constructor de la classe mere
+	I2C("MB12xx", MAX17205_DEVICE_PATH, bus, address, 100000), // _address est private on appelle donc le constructor de la classe mere
 								// la frequence du bus est à 100 khz ***
-	_min_distance(SRF02_MIN_DISTANCE),
-	_max_distance(SRF02_MAX_DISTANCE),
 	_reports(nullptr),
 	_sensor_ok(false),
 	_measure_ticks(0),
@@ -327,27 +241,20 @@ CHARGING_I2C::init()
 	}
 
 	/* allocate basic report buffers */
-	//_reports = new ringbuffer::RingBuffer(2, sizeof(distance_sensor_s));
 	_reports = new ringbuffer::RingBuffer(2, sizeof(charging_info_s));
 
-	// TODO: a quoi ca sert?
-	_index_counter = SRF02_I2C_BASEADDR;	/* set temp sonar i2c address to base adress */
+	/* Set I2C Address */
+	_index_counter = MAX17205_I2C_BASEADDR;	/* set temp sonar i2c address to base adress */
 	set_address(_index_counter);		/* set I2c port to temp sonar i2c adress */
 
 	if (_reports == nullptr) {
 		return ret;
 	}
 
-	// TODO: a quoi ca sert?
 	_class_instance = register_class_devname(RANGE_FINDER_BASE_DEVICE_PATH);
 
 	/* get a publish handle on the range finder topic */
-	//struct distance_sensor_s ds_report = {};
 	struct charging_info_s ds_report = {};
-
-	// TODO: changer de topic pour le nouveau
-	//_distance_sensor_topic = orb_advertise_multi(ORB_ID(distance_sensor), &ds_report,
-	//			 &_orb_class_instance, ORB_PRIO_LOW);
 
 	_charging_info_topic = orb_advertise_multi(ORB_ID(charging_info), &ds_report,
 				 &_orb_class_instance, ORB_PRIO_LOW);
@@ -359,49 +266,36 @@ CHARGING_I2C::init()
 	// XXX we should find out why we need to wait 200 ms here
 	usleep(200000);
 
-	/* check for connected rangefinders on each i2c port:
-	   We start from i2c base address (0x70 = 112) and count downwards
-	   So second iteration it uses i2c address 111, third iteration 110 and so on*/
-	// ON NA PAS BESOIN DE FAIRE CELA PUISQUE LON CONNAIT NOTRE ADRESSE ???
-	//TODO: A TESTER!
-
 	// on enleve MB12XX_MAX_RANGEFINDERS comme condition de la boucle suivante
 	// permettait de faire un scroll de ladresse avec plusieurs essaie mais on en a pas besoin
 	for (unsigned counter = 0; counter <= 0; counter++) {
-		_index_counter = SRF02_I2C_BASEADDR + counter * 2;	/* set temp sonar i2c address to base adress - counter */
+		_index_counter = MAX17205_I2C_BASEADDR + counter * 2;	/* set temp sonar i2c address to base adress - counter */
 		set_address(_index_counter);				/* set I2c port to temp sonar i2c adress */
-		int ret2 = measure();
 
-		if (ret2 == 0) { /* sonar is present -> store address_index in array */
-			addr_ind.push_back(_index_counter);
-			DEVICE_DEBUG("sonar added");
-			_latest_sonar_measurements.push_back(200);
-		}
+        //TODO: Ajouter la detection du module MAX17205
 
 		// pour debug notre device repond a quel adresse (en base 10)
 		warn("ladresse est (BASE 10): %i", _index_counter);
 	}
 
-	_index_counter = SRF02_I2C_BASEADDR;
+	_index_counter = MAX17205_I2C_BASEADDR;
 	set_address(_index_counter); /* set i2c port back to base adress for rest of driver */
 
 	// cycling rate utilisé (dans notre cas, il y a un seul capteur detecté)
-	/* if only one sonar detected, no special timing is required between firing, so use default */
 	if (addr_ind.size() == 1) {
-		_cycling_rate = SRF02_CONVERSION_INTERVAL;
+		_cycling_rate = MAX17205_CONVERSION_INTERVAL;
 
 	} else {
 		_cycling_rate = TICKS_BETWEEN_SUCCESIVE_FIRES;
 	}
 
-	/* show the connected sonars in terminal */
+	/* show the connected device in terminal */
 	for (unsigned i = 0; i < addr_ind.size(); i++) {
 		DEVICE_LOG("sonar %d with address %d added", (i + 1), addr_ind[i]);
 	}
 
-	DEVICE_DEBUG("Number of sonars connected: %d", addr_ind.size());
-
 	ret = OK;
+
 	/* sensor is ok, but we don't really know if it is within range */
 	_sensor_ok = true;
 
@@ -415,30 +309,6 @@ CHARGING_I2C::probe()
 	// measure() dans la classe charging I2C
 	//return measure();
 	return OK;
-}
-
-void
-CHARGING_I2C::set_minimum_distance(float min)
-{
-	_min_distance = min;
-}
-
-void
-CHARGING_I2C::set_maximum_distance(float max)
-{
-	_max_distance = max;
-}
-
-float
-CHARGING_I2C::get_minimum_distance()
-{
-	return _min_distance;
-}
-
-float
-CHARGING_I2C::get_maximum_distance()
-{
-	return _max_distance;
 }
 
 int
@@ -544,17 +414,6 @@ CHARGING_I2C::ioctl(struct file *filp, int cmd, unsigned long arg)
 		/* XXX implement this */
 		return -EINVAL;
 
-	case RANGEFINDERIOCSETMINIUMDISTANCE: {
-			set_minimum_distance(*(float *)arg);
-			return 0;
-		}
-		break;
-
-	case RANGEFINDERIOCSETMAXIUMDISTANCE: {
-			set_maximum_distance(*(float *)arg);
-			return 0;
-		}
-		break;
 
 	default:
 		/* give it to the superclass */
@@ -598,12 +457,6 @@ CHARGING_I2C::read(struct file *filp, char *buffer, size_t buflen)
 	do {
 		_reports->flush();
 
-		/* trigger a measurement */
-		if (OK != measure()) {
-			ret = -EIO;
-			break;
-		}
-
 		/* wait for it to complete */
 		usleep(_cycling_rate * 2);
 
@@ -623,44 +476,6 @@ CHARGING_I2C::read(struct file *filp, char *buffer, size_t buflen)
 	return ret;
 }
 
-int
-CHARGING_I2C::measure()
-{
-
-	int ret;
-
-	/*
-	 * Send the command to begin a measurement.
-	 */
-
-	//uint8_t cmd[2];
-
-	// TEST: on get les valeurs du topic charging_info_2 oour obtenir des donnée dans les deux sens
-	///////////////////////////////////////////////////////////////////////////
-	//orb_copy(ORB_ID(charging_info_2), _charging_info_sub_2, &_charging_2);
-
-	///////////////////////////////////////////////////////////////////////////
-
-	//cmd[0] = (uint8_t)_charging_2.manual_test;
-	//cmd[1] = 0x00;
-
-	//ret = transfer(cmd, 2, nullptr, 0);
-
-	// pour debug
-	//warn("valeur OK %d et valeur ret %d",OK,ret);
-
-	/*
-	if (OK != ret) {
-		perf_count(_comms_errors);
-		DEVICE_DEBUG("i2c::transfer returned %d", ret);
-		return ret;
-	}
-	*/
-
-	ret = OK;
-
-	return ret;
-}
 
 int
 CHARGING_I2C::collect()
@@ -710,7 +525,7 @@ CHARGING_I2C::collect()
 	if((int)(_parameters.is_new_bat) == 0)
 	{
 		// on met lasresse pour faire un read des parametres (0x6C selon la chip -> 0x36 selon la nomenclature du driver)
-		set_address(0x36);
+		set_address(0x36); /* Address in 7bit format (0x6C -> 0x36)*/
 
 		// commandes pour lire les valeurs pertinentes sur le MAX17205 (voir plus bas pour les valeurs lues)
 		uint8_t cmd[11] = {0x19,0xD2,0xD3,0xD4,0x05,0x0A,0x0B,0x11,0x20,0x06,0xB8};
@@ -771,30 +586,25 @@ CHARGING_I2C::collect()
 	/////////////////////////////////////////////////////////////////////////////////////////
 	else if((int)(_parameters.is_new_bat) == 1)
 	{
-		// on met ladresse pour faire un read des parametres (0x16 selon la chip -> 0x0B selon la nomenclature du driver)
+        errx("NVconfig CONFIRMED! Proceeding to config in 10 seconds.");
+        errx("If this is not wanted, cut the power NOW !");
+        usleep(10000000); //Sleep for 10 seconds
 
+		// on met ladresse pour faire un read des parametres (0x16 selon la chip -> 0x0B selon la nomenclature du driver)
 		BAT_CAP_REG = _parameters.bat_cap * 1.0f/(0.005f/(_parameters.rsense / 1000.0f));
 
 		// on calcul les LSB et MSB a programmer selon la capacité désirée
-	        BAT_CAP_REG_LSB = (uint8_t)((uint16_t)(BAT_CAP_REG) & 0x00FF);
-	        BAT_CAP_REG_MSB = (uint8_t)(((uint16_t)(BAT_CAP_REG) & 0xFF00)/256.0f);
+	    BAT_CAP_REG_LSB = (uint8_t)((uint16_t)(BAT_CAP_REG) & 0x00FF);
+	    BAT_CAP_REG_MSB = (uint8_t)(((uint16_t)(BAT_CAP_REG) & 0xFF00)/256.0f);
 
-	        BAT_FULL_CAP_REG_LSB = (uint8_t)((uint16_t)(BAT_CAP_REG+0.16f*BAT_CAP_REG) & 0x00FF);
-	        BAT_FULL_CAP_REG_MSB = (uint8_t)(((uint16_t)(BAT_CAP_REG+0.16f*BAT_CAP_REG) & 0xFF00)/256.0f);
+	    BAT_FULL_CAP_REG_LSB = (uint8_t)((uint16_t)(BAT_CAP_REG+0.16f*BAT_CAP_REG) & 0x00FF);
+	    BAT_FULL_CAP_REG_MSB = (uint8_t)(((uint16_t)(BAT_CAP_REG+0.16f*BAT_CAP_REG) & 0xFF00)/256.0f);
 
-	        // on calcul les LSB et MSB a programmer selon la résistance pour mesurer le courant que lon choisie
-	        RSENSE_REG_LSB = (uint8_t)((uint16_t)(_parameters.rsense*100.0f) & 0x00FF);
-	        RSENSE_REG_MSB = (uint8_t)(((uint16_t)(_parameters.rsense*100.0f) & 0xFF00)/256.0f);
+	    // on calcul les LSB et MSB a programmer selon la résistance pour mesurer le courant que lon choisie
+	    RSENSE_REG_LSB = (uint8_t)((uint16_t)(_parameters.rsense*100.0f) & 0x00FF);
+	    RSENSE_REG_MSB = (uint8_t)(((uint16_t)(_parameters.rsense*100.0f) & 0xFF00)/256.0f);
 
 
-		static int compt = 0;
-
-		// TODO: cleaner le code
-		// pour reset du fuel gauge (algorithme de la chip)
-		uint8_t reset_addr2 = 0xBB;
-		uint8_t reset_reg2[2] = {0x01,0x00};
-
-		// TODO: cleaner le code
 		// adresses de registre et valeurs correspondantes pour configurer le MAX17205 (3S 1000 mAh LiPo)
 		uint8_t charging_reg[15] = {0xA0,0xA1,0xA2,0xA3,0xA5,0xA8,0xA9,0xB3,0xB5,0xB7,0xB8,0xB9,0xCF,0xB8,0XC8};
 		// config par défault a mettre dans les registre (8 bits LSB then 8 bits MSB)
@@ -803,136 +613,135 @@ CHARGING_I2C::collect()
 		perf_begin(_sample_perf);
 
 		// premiere étape de programmation: setter chaque registre
-		if(compt == 0)
-		{
-			// TODO: cleaner le code
-			set_address(0x0B); // slave adress -> 0x16
+		set_address(0x0B); // slave adress -> 0x16
 
-			uint8_t val11[2] = {0,0};
+		uint8_t val11[2] = {0,0};
 
-			// pour configurer Cgain à la valeur désiré.... (FONCTION ENLEVÉE)
-			//////////////////////////////////////////////////////////////
-			/*
-			ret = transfer((uint8_t*)0xB8, 1, val11, 2); // envoie la commande au slave pour faire un read-> read à nNVCfg0
-			nNVCfG0 = (uint16_t)((val11[1] * 256) | val11[0]);
+		// pour configurer Cgain à la valeur désiré.... (FONCTION ENLEVÉE)
+		/*
+		ret = transfer((uint8_t*)0xB8, 1, val11, 2); // envoie la commande au slave pour faire un read-> read à nNVCfg0
+		nNVCfG0 = (uint16_t)((val11[1] * 256) | val11[0]);
 
-			nNVCfG0 = nNVCfG0 | 0x0040;
+		nNVCfG0 = nNVCfG0 | 0x0040;
 
-	        	NEW_nNVCfG0_LSB = (uint8_t)((uint16_t)(nNVCfG0) & 0x00FF);
-	        	NEW_nNVCfG0_MSB = (uint8_t)(((uint16_t)(nNVCfG0) & 0xFF00)/256.0f); 
-			*/
-			//////////////////////////////////////////////////////////////
+	    	NEW_nNVCfG0_LSB = (uint8_t)((uint16_t)(nNVCfG0) & 0x00FF);
+	    	NEW_nNVCfG0_MSB = (uint8_t)(((uint16_t)(nNVCfG0) & 0xFF00)/256.0f);
+		*/
 
-			// pour configurer le balancing threshold à la valeur désirée
-			//////////////////////////////////////////////////////////////
-			// 0 - 000 -> no balance
-			// 1 - 001 -> 2.5 mV
-			// 2 - 010 -> 5.0 mV
-			// 3 - 011 -> 10.0 mV
-			// 4 - 100 -> 20.0 mV
-			// 5 - 101 -> 40.0 mV
-			// 6 - 110 -> 80.0 mV
-			// 7 - 111 -> 160.0 mV
-			//////////////////////////////////////////////////////////////
+		// pour configurer le balancing threshold à la valeur désirée
+		// 0 - 000 -> no balance
+		// 1 - 001 -> 2.5 mV
+		// 2 - 010 -> 5.0 mV
+		// 3 - 011 -> 10.0 mV
+		// 4 - 100 -> 20.0 mV
+		// 5 - 101 -> 40.0 mV
+		// 6 - 110 -> 80.0 mV
+		// 7 - 111 -> 160.0 mV
 
-			ret = transfer(&charging_reg[8], 1, val11, 2); // envoie la commande au slave pour faire un read-> read à nNVCfg0
-			Current_PackCfg = (uint16_t)((val11[1] * 256) | val11[0]);
+		ret = transfer(&charging_reg[8], 1, val11, 2); // envoie la commande au slave pour faire un read-> read à nNVCfg0
+		Current_PackCfg = (uint16_t)((val11[1] * 256) | val11[0]);
 
-			Current_PackCfg = Current_PackCfg & 0b1111111100011111;
+		Current_PackCfg = Current_PackCfg & 0b1111111100011111;
 
-			if((int)(_parameters.balance_threshold) == 0)
-				Current_PackCfg = Current_PackCfg | 0b0000000000000000;
-			else if((int)(_parameters.balance_threshold) == 1)
-				Current_PackCfg = Current_PackCfg | 0b0000000000100000;
-			else if((int)(_parameters.balance_threshold) == 2)
-				Current_PackCfg = Current_PackCfg | 0b0000000001000000;
-			else if((int)(_parameters.balance_threshold) == 3)
-				Current_PackCfg = Current_PackCfg | 0b0000000001100000;
-			else if((int)(_parameters.balance_threshold) == 4)
-				Current_PackCfg = Current_PackCfg | 0b0000000010000000;
-			else if((int)(_parameters.balance_threshold) == 5)
-				Current_PackCfg = Current_PackCfg | 0b0000000010100000;
-			else if((int)(_parameters.balance_threshold) == 6)
-				Current_PackCfg = Current_PackCfg | 0b0000000011000000;
-			else if((int)(_parameters.balance_threshold) == 7)
-				Current_PackCfg = Current_PackCfg | 0b0000000011100000;
-			else
-				Current_PackCfg = Current_PackCfg | 0b0000000010000000; // default blancing threshold to 20 mV if user value is not valid
+		if((int)(_parameters.balance_threshold) == 0)
+			Current_PackCfg = Current_PackCfg | 0b0000000000000000;
+		else if((int)(_parameters.balance_threshold) == 1)
+			Current_PackCfg = Current_PackCfg | 0b0000000000100000;
+		else if((int)(_parameters.balance_threshold) == 2)
+			Current_PackCfg = Current_PackCfg | 0b0000000001000000;
+		else if((int)(_parameters.balance_threshold) == 3)
+			Current_PackCfg = Current_PackCfg | 0b0000000001100000;
+		else if((int)(_parameters.balance_threshold) == 4)
+			Current_PackCfg = Current_PackCfg | 0b0000000010000000;
+		else if((int)(_parameters.balance_threshold) == 5)
+			Current_PackCfg = Current_PackCfg | 0b0000000010100000;
+		else if((int)(_parameters.balance_threshold) == 6)
+			Current_PackCfg = Current_PackCfg | 0b0000000011000000;
+		else if((int)(_parameters.balance_threshold) == 7)
+			Current_PackCfg = Current_PackCfg | 0b0000000011100000;
+		else
+			Current_PackCfg = Current_PackCfg | 0b0000000010000000; // default blancing threshold to 20 mV if user value is not valid
 
-	        	NEW_PackCfg_LSB = (uint8_t)((uint16_t)(Current_PackCfg) & 0x00FF);
-	        	NEW_PackCfg_MSB = (uint8_t)(((uint16_t)(Current_PackCfg) & 0xFF00)/256.0f);
+        NEW_PackCfg_LSB = (uint8_t)((uint16_t)(Current_PackCfg) & 0x00FF);
+        NEW_PackCfg_MSB = (uint8_t)(((uint16_t)(Current_PackCfg) & 0xFF00)/256.0f);
 
-			//////////////////////////////////////////////////////////////
-
-			uint8_t test11[3] = {charging_reg[0],charging_config[1],charging_config[0]};
-			uint8_t test12[3] = {charging_reg[1],charging_config[3],charging_config[2]};
-			uint8_t test13[3] = {charging_reg[2],charging_config[5],charging_config[4]};
-			uint8_t test14[3] = {charging_reg[3],charging_config[7],charging_config[6]};
-			uint8_t test15[3] = {charging_reg[4],BAT_FULL_CAP_REG_LSB,BAT_FULL_CAP_REG_MSB};
-			uint8_t test16[3] = {charging_reg[5],charging_config[11],charging_config[10]};
-			uint8_t test17[3] = {charging_reg[6],BAT_CAP_REG_LSB,BAT_CAP_REG_MSB};
-			uint8_t test18[3] = {charging_reg[7],BAT_CAP_REG_LSB,BAT_CAP_REG_MSB};
-			uint8_t test19[3] = {charging_reg[8],charging_config[17],charging_config[16]};
-			uint8_t test110[3] = {charging_reg[9],charging_config[19],charging_config[18]};
-			uint8_t test111[3] = {charging_reg[10],charging_config[21],charging_config[20]};
-			uint8_t test112[3] = {charging_reg[11],charging_config[23],charging_config[22]};
-			uint8_t test113[3] = {charging_reg[12],RSENSE_REG_LSB,RSENSE_REG_MSB};
-			//uint8_t test114[3] = {charging_reg[13],NEW_nNVCfG0_LSB,NEW_nNVCfG0_MSB};
-			//uint8_t test115[3] = {charging_reg[14],0x00,0x20};
-			uint8_t test116[3] = {charging_reg[8],NEW_PackCfg_LSB,NEW_PackCfg_MSB};
+		uint8_t test11[3] = {charging_reg[0],charging_config[1],charging_config[0]};
+		uint8_t test12[3] = {charging_reg[1],charging_config[3],charging_config[2]};
+		uint8_t test13[3] = {charging_reg[2],charging_config[5],charging_config[4]};
+		uint8_t test14[3] = {charging_reg[3],charging_config[7],charging_config[6]};
+		uint8_t test15[3] = {charging_reg[4],BAT_FULL_CAP_REG_LSB,BAT_FULL_CAP_REG_MSB};
+		uint8_t test16[3] = {charging_reg[5],charging_config[11],charging_config[10]};
+		uint8_t test17[3] = {charging_reg[6],BAT_CAP_REG_LSB,BAT_CAP_REG_MSB};
+		uint8_t test18[3] = {charging_reg[7],BAT_CAP_REG_LSB,BAT_CAP_REG_MSB};
+		uint8_t test19[3] = {charging_reg[8],charging_config[17],charging_config[16]};
+		uint8_t test110[3] = {charging_reg[9],charging_config[19],charging_config[18]};
+		uint8_t test111[3] = {charging_reg[10],charging_config[21],charging_config[20]};
+		uint8_t test112[3] = {charging_reg[11],charging_config[23],charging_config[22]};
+		uint8_t test113[3] = {charging_reg[12],RSENSE_REG_LSB,RSENSE_REG_MSB};
+		//uint8_t test114[3] = {charging_reg[13],NEW_nNVCfG0_LSB,NEW_nNVCfG0_MSB};
+		//uint8_t test115[3] = {charging_reg[14],0x00,0x20};
+		uint8_t test116[3] = {charging_reg[8],NEW_PackCfg_LSB,NEW_PackCfg_MSB};
 
 
-			// configure registre pour la capacité de la battery
-			ret = transfer(test11, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test12, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test13, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test14, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test15, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test16, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test17, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test18, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test19, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test110, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test111, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test112, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test113, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			//ret = transfer(test115, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			//ret = transfer(test114, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-			ret = transfer(test116, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-		}		
+		// configure registre pour la capacité de la battery
+		ret = transfer(test11, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test12, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test13, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test14, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test15, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test16, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test17, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test18, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test19, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test110, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test111, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test112, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test113, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		//ret = transfer(test115, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		//ret = transfer(test114, 3, nullptr, 0); // envoie l'adresse du registre à configurer
+		ret = transfer(test116, 3, nullptr, 0); // envoie l'adresse du registre à configurer
 
-		// deuxieme étape de programmation: reset model gauge (so change take effect)
-		else if(compt == 4) // ON SET LE COMPTEUR POUR QUE LES REGISTRES SOIENT CORRECTEMENT TRANSFÉRÉ AVANT DE RESETTER LE CHIP
-		{
-			set_address(0x36); //slave adress -> 0x6C
+        /* Deuxieme etape : Clear CommStat.NVError */
+		set_address(0x36); //slave adress -> 0x6C
 
-			uint8_t test33[3] = {reset_addr2,reset_reg2[0],reset_reg2[1]};
+        /* Clear the ClearComm.NVerror register */
+        uint8_t CommStatRegister = (0x61);
+        uint8_t DataToSend[3] = {0x61,0x00,0x00};
+        ret = transfer(DataToSend, 3, nullptr, 0);
 
-            if(test33[2]==0)
-            {
-                test33[2]=test33[2];
-            }
-			// fuel gauge model reset
-			ret = transfer(test33, 3, nullptr, 0); // envoie l'adresse du registre à configurer
-		}
+        /* Send 0xE904 to the command register to initiate a block command write */
+        //uint8_t CommandRegister = (0x60);
+        uint8_t DataToSend_1[3] = {0x60,0x04,0xE9};
+        ret = transfer(DataToSend_1, 3, nullptr, 0);
 
-		if(compt++ > 4)
-		{
-			compt = 0;
-            //float value = 0.0;
-            //param_set(_parameters.is_new_bat,(void*)&value);
-		}
+        /* Wait for the copy to complete */
+        usleep(5000000);
 
-		if (ret < 0) {
-			DEVICE_DEBUG("error reading from sensor: %d", ret);
-			perf_count(_comms_errors);
-			perf_end(_sample_perf);
-			return ret;
-		}
+        /*Check if EEPROM write was successful */
+        DataToSend[0] = CommStatRegister;
+        uint8_t valbuffer[2] = {0,0};
+        ret = transfer(&DataToSend[0], 1, valbuffer, 2); // Fait une lecture de l'etat du NV register
+        uint16_t NVStatus = ((uint16_t)((valbuffer[1] * 256) | valbuffer[0]) & 0b0000000000000100)>>2;
+        if(NVStatus)
+        {
+            warnx("NV ERROR ACTIVE, CONFIG WRITE FAILED");
+        }
+
+        /* Send 0x000F to the command register to POR the IC*/
+        //CommandRegister = (0x60);
+        uint8_t DataToSend_2[3] = {0x60,0x0F,0x00};
+        ret = transfer(DataToSend_2, 3, nullptr, 0);
+
+        /* Wait for firmware reboot */
+        usleep(5000000);
+
+        /* Execute a POR Reboot */
+        //uint8_t CounterRegister = (0xBB);
+        uint8_t DataToSend_3[3] = {0xBB,0x01,0x00};
+        transfer(DataToSend_3, 3, nullptr, 0);
 
 		// publish des valeurs lu sur le MAX17205 (et conditionnement des valeurs) (VOIR TABLEAU 1 PAGE 26 DE LA DATASHEET)
 		//struct charging_info_s report;
-
 		report.AvgVCell = 1;
 		report.AvgCell3 = 1;
 		report.AvgCell2 = 1;
@@ -943,6 +752,9 @@ CHARGING_I2C::collect()
 		report.TTE = 1;
 		report.TTF = 1;
 		report.RepSOC = 1;
+
+        /* SetNewBat Value to 0 so we don't go back in the Config Loop*/
+        _parameters.is_new_bat = 0;
 
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////
@@ -1084,11 +896,6 @@ CHARGING_I2C::cycle()
 	_index_counter = addr_ind[_cycle_counter];
 	set_address(_index_counter);
 
-	/* Perform measurement */
-	if (OK != measure()) {
-		DEVICE_DEBUG("measure error sonar adress %d", _index_counter);
-	}
-
 	/* next phase is collection */
 	_collect_phase = true;
 
@@ -1184,6 +991,7 @@ CHARGING_I2C::print_info()
  * charging_i2c start
  * charging_i2c stop
  * charging_i2c test
+ * charging_i2c config
  * charging_i2c reset
  * charging_i2c info
   */
@@ -1214,7 +1022,7 @@ start()
 	/* create the driver */
 	// constructor de la classe fille appelle le contructor de la fonction mere
 	/////////////////////////////////////////////////////////////////////////////////////	
-	g_dev = new CHARGING_I2C(SRF02_I2C_BUS);
+	g_dev = new CHARGING_I2C(MAX17205_I2C_BUS);
 
 	if (g_dev == nullptr) {
 		
@@ -1244,7 +1052,7 @@ start()
 	// apparait lorsque lon fait charging_i2c start. on uvre donc le peripherique qui fait mainteant partie de la liste
 	// de tout les peripherique connecté au pixhawk, mais est-ce vraiment utile ?? -> a voir
 	/////////////////////////////////////////////////////////////////////////////////////	
-	fd = open(SRF02_DEVICE_PATH, O_RDONLY);
+	fd = open(MAX17205_DEVICE_PATH, O_RDONLY);
 
 	if (fd < 0) {
 		
@@ -1305,10 +1113,10 @@ test()
 	ssize_t sz;
 	int ret;
 
-	int fd = open(SRF02_DEVICE_PATH, O_RDONLY);
+	int fd = open(MAX17205_DEVICE_PATH, O_RDONLY);
 
 	if (fd < 0) {
-		err(1, "%s open failed (try 'srf02_i2c start' if the driver is not running", SRF02_DEVICE_PATH);
+		err(1, "%s open failed (try 'srf02_i2c start' if the driver is not running", MAX17205_DEVICE_PATH);
 	}
 
 	/* do a simple demand read */
@@ -1368,7 +1176,7 @@ test()
 void
 reset()
 {
-	int fd = open(SRF02_DEVICE_PATH, O_RDONLY);
+	int fd = open(MAX17205_DEVICE_PATH, O_RDONLY);
 
 	if (fd < 0) {
 		err(1, "failed ");
