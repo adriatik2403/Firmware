@@ -728,9 +728,54 @@ CHARGING_I2C::checkEeprom()
     uint8_t reg[1] = {0xED};
     transfer(reg, 1, dataret, 2);
 
+    int WriteLeft = 255;
+
     /* Calculate Number of remaining writes */
-    uint16_t WriteLeft = 9 - (int)dataret[0];
-    warnx("Number of EEPROM Writes left : %d",WriteLeft);
+    if((int)dataret[0] == 0b00000000)
+    {
+        WriteLeft = 8;
+    }
+    else if((int)dataret[0] == 0b00000001)
+    {
+        WriteLeft = 7;
+    }
+    else if((int)dataret[0] == 0b00000011)
+    {
+        WriteLeft = 6;
+    }
+    else if((int)dataret[0] == 0b00000111)
+    {
+        WriteLeft = 5;
+    }
+    else if((int)dataret[0] == 0b00001111)
+    {
+        WriteLeft = 4;
+    }
+    else if((int)dataret[0] == 0b00011111)
+    {
+        WriteLeft = 3;
+    }
+    else if((int)dataret[0] == 0b00111111)
+    {
+        WriteLeft = 2;
+    }
+    else if((int)dataret[0] == 0b01111111)
+    {
+        WriteLeft = 1;
+    }
+    else if((int)dataret[0] == 0b11111111)
+    {
+        WriteLeft = 0;
+    }
+
+    if(WriteLeft != 255)
+    {
+        warnx("Number of EEPROM Writes left : %d",WriteLeft);
+    }
+    else
+    {
+        warnx("EEPROM read error !");
+    }
 
     return;
 }
